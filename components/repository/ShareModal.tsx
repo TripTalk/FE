@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
+import { IconSymbol } from '@/components/shared/ui/icon-symbol';
 import React from 'react';
 import {
     Dimensions,
@@ -32,11 +33,11 @@ export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.modalContainer}>
         {/* 헤더 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <ThemedText style={styles.backButtonText}>←</ThemedText>
+            <IconSymbol name="chevron.left" size={24} color="#333333" />
           </TouchableOpacity>
           <ThemedText style={styles.headerTitle}>일정 공유하기</ThemedText>
           <View style={styles.placeholder} />
@@ -124,39 +125,43 @@ export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
   backButton: {
     padding: 8,
-    marginLeft: -4,
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#333333',
-    fontWeight: '400',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    minWidth: 40,
+    minHeight: 40,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333333',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 16,
   },
   placeholder: {
     width: 40,
