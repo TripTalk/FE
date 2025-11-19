@@ -1,15 +1,15 @@
+import { TravelDetailHeader } from '@/components/repository/TravelDetailHeader';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
-import { IconSymbol } from '@/components/shared/ui/icon-symbol';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,14 +34,7 @@ export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.modalContainer}>
-        {/* 헤더 */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <IconSymbol name="chevron.left" size={24} color="#333333" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>일정 공유하기</ThemedText>
-          <View style={styles.placeholder} />
-        </View>
+        <TravelDetailHeader title="일정 공유하기" canGoBack onBack={onClose} />
 
         {/* 공유 내용 */}
         <ScrollView 
@@ -127,45 +120,21 @@ export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  backButton: {
-    padding: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    minWidth: 40,
-    minHeight: 40,
-  },
+  // TravelDetailHeader 재사용으로 기존 header 스타일 제거
   scrollView: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333333',
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: 16,
-  },
-  placeholder: {
-    width: 40,
-  },
+  // headerTitle, placeholder 제거 (TravelDetailHeader 내에 존재)
   content: {
     padding: 16,
   },
@@ -249,6 +218,7 @@ const styles = StyleSheet.create({
   },
   shareButtons: {
     gap: 16,
+    marginBottom: 40,
   },
   shareButton: {
     flexDirection: 'row',

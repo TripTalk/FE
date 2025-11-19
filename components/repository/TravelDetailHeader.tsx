@@ -7,10 +7,15 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 interface TravelDetailHeaderProps {
   title: string;
   canGoBack?: boolean;
+  onBack?: () => void; // 외부에서 커스텀 뒤로가기 처리 (모달 등)
 }
 
-export function TravelDetailHeader({ title, canGoBack = true }: TravelDetailHeaderProps) {
+export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDetailHeaderProps) {
   const handleBackPress = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
     if (router.canGoBack()) {
       router.back();
     }
@@ -37,9 +42,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: '#FFFFFF',
+    minHeight: 60,
   },
   backButton: {
     padding: 8,
+    minWidth: 40,
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
