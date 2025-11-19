@@ -3,6 +3,7 @@ import React from 'react';
 import {
     ScrollView,
     StyleSheet,
+    TouchableOpacity,
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,13 +11,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccommodationCard } from '@/components/home/AccommodationCard';
 import { AIBanner } from '@/components/home/AIBanner';
 import { DestinationCard } from '@/components/home/DestinationCard';
-import { SectionHeader } from '@/components/home/SectionHeader';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
 
 export default function HomeScreen() {
   const handleTravelPress = (id: string) => {
     router.push(`/travel/${id}`);
+  };
+
+  const handleDestinationPress = () => {
+    router.push('/destinations');
+  };
+
+  const handleAccommodationPress = () => {
+    router.push('/accommodation');
   };
 
   return (
@@ -35,7 +43,15 @@ export default function HomeScreen() {
 
         {/* 많이 찾는 여행지 Section */}
         <View style={styles.sectionContainer}>
-          <SectionHeader title="많이 찾는 여행지" />
+          <TouchableOpacity 
+            style={styles.sectionHeaderContainer}
+            onPress={handleDestinationPress}
+          >
+            <ThemedText style={styles.sectionTitle}>많이 찾는 여행지</ThemedText>
+            <View style={styles.arrow}>
+              <ThemedText style={styles.arrowText}>{'>'}</ThemedText>
+            </View>
+          </TouchableOpacity>
           
           <ScrollView 
             horizontal 
@@ -59,7 +75,15 @@ export default function HomeScreen() {
 
         {/* 숙박·항공 Section */}
         <View style={styles.sectionContainer}>
-          <SectionHeader title="숙박·항공" />
+          <TouchableOpacity 
+            style={styles.sectionHeaderContainer}
+            onPress={handleAccommodationPress}
+          >
+            <ThemedText style={styles.sectionTitle}>숙박·항공</ThemedText>
+            <View style={styles.arrow}>
+              <ThemedText style={styles.arrowText}>{'>'}</ThemedText>
+            </View>
+          </TouchableOpacity>
           
           <View style={styles.accommodationGrid}>
             <View style={styles.accommodationRow}>
@@ -136,5 +160,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginBottom: 8,
+  },
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingVertical: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  arrow: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowText: {
+    fontSize: 16,
+    color: '#999999',
+    fontWeight: 'bold',
   },
 });

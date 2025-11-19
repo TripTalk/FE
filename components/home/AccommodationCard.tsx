@@ -8,6 +8,7 @@ interface AccommodationCardProps {
   price: string;
   originalPrice?: string;
   date?: string;
+  discount?: string;
   imageUrl: string;
   onPress: () => void;
 }
@@ -18,6 +19,7 @@ export const AccommodationCard: React.FC<AccommodationCardProps> = ({
   price, 
   originalPrice, 
   date, 
+  discount,
   imageUrl, 
   onPress 
 }) => {
@@ -31,7 +33,12 @@ export const AccommodationCard: React.FC<AccommodationCardProps> = ({
       <View style={styles.content}>
         <ThemedText style={styles.title}>{title}</ThemedText>
         <ThemedText style={styles.tag}>{tag}</ThemedText>
-        <ThemedText style={styles.price}>{price}</ThemedText>
+        <View style={styles.priceContainer}>
+          <ThemedText style={styles.price}>{price}</ThemedText>
+          {discount && (
+            <ThemedText style={styles.discount}>-{discount}</ThemedText>
+          )}
+        </View>
         {originalPrice && (
           <ThemedText style={styles.originalPrice}>{originalPrice}</ThemedText>
         )}
@@ -73,11 +80,25 @@ const styles = StyleSheet.create({
     color: '#666666',
     marginBottom: 4,
   },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   price: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#FF6B6B',
-    marginBottom: 2,
+    marginRight: 4,
+  },
+  discount: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   originalPrice: {
     fontSize: 12,
