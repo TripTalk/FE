@@ -7,31 +7,36 @@ TripTalk는 React Native와 Expo Router로 개발된 여행 관리 및 공유 �
 ## ✨ 주요 기능
 
 ### 📱 **홈 화면**
+
 - 여행 추천 카드 및 배너
 - 인기 여행지 소개 (제주도, 부산, 파리, 뉴욕 등)
 - 카테고리별 여행 상품 탐색
 
 ### 📁 **저장소**
+
 - **계획 완료**: 예정된 여행 목록 관리
 - **여행 완료**: 완료된 여행 기록 보관
 - 여행 카드 형태의 직관적인 UI
 - 상세보기를 통한 일정 및 가격 정보 확인
 
 ### 👤 **마이페이지**
+
 - 개인 프로필 관리
 - 여행 통계 (완료한 여행, 계획 중인 여행, 적립 포인트)
 - 뱃지 시스템 (첫 여행, 시간 마니아, 한번가 등)
 - 계정 설정 및 개인정보 변경
 
 ### 🔄 **여행 상세 화면**
+
 - 날짜별 상세 일정 표시
 - 가격 정보 (항공료, 숙박비, 식비 등)
 - 여행 하이라이트 및 추천 포인트
 - 소셜 공유 기능
 
 ### 📤 **공유 기능**
+
 - 메시지로 공유하기
-- 링크 공유하기  
+- 링크 공유하기
 - 카카오톡으로 공유
 - 여행 정보 미리보기 카드
 
@@ -104,7 +109,7 @@ npx expo start
 실행 후 다음 옵션들을 선택할 수 있습니다:
 
 - **i**: iOS 시뮬레이터에서 열기
-- **a**: Android 에뮬레이터에서 열기  
+- **a**: Android 에뮬레이터에서 열기
 - **w**: 웹 브라우저에서 열기
 - **r**: 앱 새로고침
 - **m**: 개발자 메뉴 토글
@@ -128,6 +133,7 @@ npm run reset-project
 ## 🎨 디자인 시스템
 
 ### 색상 팔레트
+
 - **Primary**: #4ECDC4 (터코이즈)
 - **Background**: #F8F9FA (라이트 그레이)
 - **Text Primary**: #333333
@@ -135,6 +141,7 @@ npm run reset-project
 - **Card Background**: #FFFFFF
 
 ### 컴포넌트 스타일
+
 - **Border Radius**: 12px (카드), 16px (배너)
 - **Shadow**: elevation 3-4, shadowOpacity 0.1
 - **Typography**: 시스템 폰트, 14-24px 범위
@@ -142,35 +149,40 @@ npm run reset-project
 ## 🔧 개발 가이드
 
 ### 새로운 화면 추가
+
 1. `app/` 폴더에 새 파일 생성
 2. Expo Router의 파일 기반 라우팅 활용
 3. `SafeAreaView`로 안전 영역 처리
 
 ### 새로운 컴포넌트 추가
+
 1. 적절한 `components/` 하위 폴더에 생성
 2. TypeScript 인터페이스 정의
 3. `ThemedText`, `ThemedView` 활용 권장
 
 ### 라우팅 구조
+
 ```typescript
 // 기본 라우팅
-router.push('/travel/123')
+router.push('/travel/123');
 
 // 탭 네비게이션
-router.push('/(tabs)/explore')
+router.push('/(tabs)/explore');
 
 // 모달
-router.push('/modal')
+router.push('/modal');
 ```
 
 ## 🐛 문제 해결
 
 ### Hot Reload가 작동하지 않을 때
+
 ```bash
 npx expo start --clear
 ```
 
 ### 모듈을 찾을 수 없다는 오류
+
 ```bash
 rm -rf node_modules
 npm install
@@ -178,6 +190,7 @@ npx expo start --clear
 ```
 
 ### iOS 시뮬레이터 연결 문제
+
 1. Xcode가 최신 버전인지 확인
 2. iOS 시뮬레이터가 실행 중인지 확인
 3. 터미널에서 `i` 키 다시 입력
