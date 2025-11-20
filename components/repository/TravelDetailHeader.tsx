@@ -37,6 +37,7 @@ export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDe
 
 
 
+
   return (
     <View style={styles.container}>
       {canGoBack && (
@@ -86,3 +87,4 @@ const styles = StyleSheet.create({
     width: 40, // backButton과 같은 너비로 중앙 정렬 유지
   },
 });
+

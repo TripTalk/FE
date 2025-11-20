@@ -1,5 +1,4 @@
 import { DestinationListCard } from '@/components/home/DestinationListCard';
-import { CollapsibleTheme } from '@/components/shared/CollapsibleTheme';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
 import { router, Stack } from 'expo-router';
@@ -56,6 +55,9 @@ const destinationData = [
 ];
 
 export default function PopularDestinationsScreen() {
+  const [selectedTheme, setSelectedTheme] = React.useState<keyof typeof themeIcons | null>(null);
+  const [isThemeSelectionExpanded, setIsThemeSelectionExpanded] = React.useState(false);
+
   const handleTravelPress = (id: string) => {
     router.push(`/travel/${id}`);
   };
@@ -64,22 +66,18 @@ export default function PopularDestinationsScreen() {
     router.back();
   };
 
-  const renderDestinationsByTheme = (theme: keyof typeof themeIcons) => {
-    const filteredDestinations = destinationData.filter(destination => 
-      destination.themes.includes(theme)
-    );
+  const handleThemeSelect = (theme: keyof typeof themeIcons) => {
+    setSelectedTheme(theme);
+    setIsThemeSelectionExpanded(false); // 선택 후 접기
+  };
 
-    return filteredDestinations.map((destination) => (
-      <DestinationListCard
-        key={destination.id}
-        title={destination.title}
-        subtitle={destination.subtitle}
-        viewCount={destination.viewCount}
-        tags={destination.tags}
-        imageUrl={destination.imageUrl}
-        onPress={() => handleTravelPress(destination.id)}
-      />
-    ));
+  const getFilteredDestinations = () => {
+    if (!selectedTheme) {
+      return destinationData; // 테마 선택 안 했을 때는 모든 목적지
+    }
+    return destinationData.filter(destination => 
+      destination.themes.includes(selectedTheme)
+    );
   };
 
   return (
@@ -94,42 +92,64 @@ export default function PopularDestinationsScreen() {
           ),
         }}
       />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
           {/* 여행 테마별 보기 */}
           <ThemedView style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
+            <TouchableOpacity 
+              style={styles.sectionHeader}
+              onPress={() => setIsThemeSelectionExpanded(!isThemeSelectionExpanded)}
+            >
               <ThemedText style={styles.sectionTitle}>여행 테마별 보기</ThemedText>
               <View style={styles.chevron}>
-                <ThemedText style={styles.chevronText}>⌄</ThemedText>
+                <ThemedText style={styles.chevronText}>
+                  {isThemeSelectionExpanded ? '⌄' : '⌃'}
+                </ThemedText>
               </View>
-            </View>
+            </TouchableOpacity>
 
-            <View style={styles.themeGrid}>
-              {Object.entries(themeIcons).map(([theme, icon]) => (
-                <TouchableOpacity key={theme} style={styles.themeItem}>
-                  <View style={styles.themeIcon}>
-                    <ThemedText style={styles.themeIconText}>{icon}</ThemedText>
+            {isThemeSelectionExpanded && (
+              <View style={styles.themeGrid}>
+                <TouchableOpacity 
+                  style={[styles.themeItem, selectedTheme === null && styles.selectedThemeItem]}
+                  onPress={() => setSelectedTheme(null)}
+                >
+                  <View style={[styles.themeIcon, selectedTheme === null && styles.selectedThemeIcon]}>
+                    <ThemedText style={styles.themeIconText}>🌍</ThemedText>
                   </View>
-                  <ThemedText style={styles.themeText}>{theme}</ThemedText>
+                  <ThemedText style={styles.themeText}>전체</ThemedText>
                 </TouchableOpacity>
-              ))}
-            </View>
+                {Object.entries(themeIcons).map(([theme, icon]) => (
+                  <TouchableOpacity 
+                    key={theme} 
+                    style={[styles.themeItem, selectedTheme === theme && styles.selectedThemeItem]}
+                    onPress={() => handleThemeSelect(theme as keyof typeof themeIcons)}
+                  >
+                    <View style={[styles.themeIcon, selectedTheme === theme && styles.selectedThemeIcon]}>
+                      <ThemedText style={styles.themeIconText}>{icon}</ThemedText>
+                    </View>
+                    <ThemedText style={styles.themeText}>{theme}</ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </ThemedView>
 
-          {/* 테마별 여행지 목록 */}
+          {/* 필터링된 여행지 목록 */}
           <View style={styles.destinationsContainer}>
-            {Object.keys(themeIcons).map((theme) => (
-              <CollapsibleTheme
-                key={theme}
-                title={`${themeIcons[theme as keyof typeof themeIcons]} ${theme}`}
-                isInitiallyExpanded={theme === '지역'}
-              >
-                {renderDestinationsByTheme(theme as keyof typeof themeIcons)}
-              </CollapsibleTheme>
+            {getFilteredDestinations().map((destination) => (
+              <DestinationListCard
+                key={destination.id}
+                title={destination.title}
+                subtitle={destination.subtitle}
+                viewCount={destination.viewCount}
+                tags={destination.tags}
+                imageUrl={destination.imageUrl}
+                onPress={() => handleTravelPress(destination.id)}
+              />
             ))}
           </View>
         </ScrollView>
@@ -216,5 +236,11 @@ const styles = StyleSheet.create({
   },
   destinationsContainer: {
     paddingHorizontal: 16,
+  },
+  selectedThemeItem: {
+    transform: [{ scale: 1.05 }],
+  },
+  selectedThemeIcon: {
+    backgroundColor: '#007AFF',
   },
 });

@@ -1,5 +1,4 @@
 import { AccommodationCard } from '@/components/home/AccommodationCard';
-import { CollapsibleTheme } from '@/components/shared/CollapsibleTheme';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
 import { router, Stack } from 'expo-router';
@@ -97,6 +96,8 @@ const accommodationData = {
 };
 
 export default function AccommodationScreen() {
+  const [activeTab, setActiveTab] = React.useState<'항공' | '숙박'>('항공');
+
   const handleItemPress = (id: string) => {
     router.push(`/travel/${id}`);
   };
@@ -144,24 +145,40 @@ export default function AccommodationScreen() {
           ),
         }}
       />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        {/* 탭 헤더 */}
+        <View style={styles.tabContainer}>
+          <View style={styles.tabWrapper}>
+            <TouchableOpacity
+              style={[styles.tabButton, activeTab === '항공' && styles.activeTabButton]}
+              onPress={() => setActiveTab('항공')}
+            >
+              <ThemedText style={[styles.tabText, activeTab === '항공' && styles.activeTabText]}>
+                항공
+              </ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabButton, activeTab === '숙박' && styles.activeTabButton]}
+              onPress={() => setActiveTab('숙박')}
+            >
+              <ThemedText style={[styles.tabText, activeTab === '숙박' && styles.activeTabText]}>
+                숙박
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
-          {/* 카테고리별 숙박·항공 정보 */}
-          <View style={styles.categoriesContainer}>
-            {Object.entries(accommodationData).map(([category, items]) => (
-              <CollapsibleTheme
-                key={category}
-                title={`✈️ ${category}`}
-                isInitiallyExpanded={category === '항공'}
-              >
-                <View style={styles.accommodationGrid}>
-                  {renderAccommodationGrid(items)}
-                </View>
-              </CollapsibleTheme>
-            ))}
+          {/* 선택된 탭의 내용 */}
+          <View style={styles.contentContainer}>
+            {accommodationData[activeTab] && (
+              <View style={styles.accommodationGrid}>
+                {renderAccommodationGrid(accommodationData[activeTab])}
+              </View>
+            )}
           </View>
 
           {/* 추천 특가 섹션 */}
@@ -218,9 +235,49 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  categoriesContainer: {
+  tabContainer: {
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  tabWrapper: {
+    flexDirection: 'row',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 25,
+    padding: 4,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  activeTabButton: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666666',
+  },
+  activeTabText: {
+    color: '#333333',
+    fontWeight: '600',
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
   },
   specialOffersContainer: {
     backgroundColor: '#FFFFFF',
@@ -235,12 +292,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   accommodationGrid: {
-    gap: 8,
+    gap: 4,
   },
   accommodationRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   emptyCard: {
     flex: 1,
