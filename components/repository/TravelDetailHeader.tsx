@@ -12,20 +12,41 @@ interface TravelDetailHeaderProps {
 
 export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDetailHeaderProps) {
   const handleBackPress = () => {
+    console.log('=== Back button pressed ===');
+    console.log('onBack exists:', !!onBack);
+    console.log('router.canGoBack():', router.canGoBack());
+    
     if (onBack) {
-      onBack();
+      console.log('Executing onBack callback...');
+      try {
+        onBack();
+        console.log('onBack callback executed successfully');
+      } catch (error) {
+        console.error('Error executing onBack:', error);
+      }
       return;
     }
+    
     if (router.canGoBack()) {
+      console.log('Using router.back()...');
       router.back();
+    } else {
+      console.log('Cannot go back with router');
     }
   };
+
+
 
   return (
     <View style={styles.container}>
       {canGoBack && (
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <IconSymbol name="chevron.left" size={24} color="#333333" />
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={handleBackPress}
+          activeOpacity={0.7}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        >
+          <IconSymbol name="chevron.left" size={28} color="#333333" />
         </TouchableOpacity>
       )}
       <ThemedText style={styles.title}>{title}</ThemedText>
@@ -45,11 +66,13 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
   backButton: {
-    padding: 8,
-    minWidth: 40,
-    minHeight: 40,
+    padding: 12,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   title: {
     fontSize: 18,

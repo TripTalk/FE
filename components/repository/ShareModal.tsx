@@ -26,15 +26,23 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
+  const handleClose = () => {
+    console.log('ShareModal handleClose called - closing modal');
+    onClose();
+  };
+
+  React.useEffect(() => {
+    console.log('ShareModal mounted/updated', { visible });
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <SafeAreaView style={styles.modalContainer}>
-        <TravelDetailHeader title="일정 공유하기" canGoBack onBack={onClose} />
+        <TravelDetailHeader title="일정 공유하기" canGoBack={true} onBack={handleClose} />
 
         {/* 공유 내용 */}
         <ScrollView 
