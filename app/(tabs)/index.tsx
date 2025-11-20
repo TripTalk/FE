@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import React from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,6 +27,10 @@ export default function HomeScreen() {
     router.push('/accommodation');
   };
 
+  const handlePlanTripPress = () => {
+    router.push('/plan-trip');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -36,10 +40,11 @@ export default function HomeScreen() {
 
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* AI Banner */}
-        <AIBanner />
+        <AIBanner onPress={handlePlanTripPress} />
 
         {/* 많이 찾는 여행지 Section */}
         <View style={styles.sectionContainer}>
@@ -145,6 +150,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   sectionContainer: {
     paddingHorizontal: 16,

@@ -8,12 +8,12 @@ interface AIBannerProps {
 
 export const AIBanner: React.FC<AIBannerProps> = ({ onPress }) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.leftSection}>
           <ThemedText style={styles.title}>AI와 함께</ThemedText>
           <ThemedText style={styles.subtitle}>여행 일정을 만들어보세요</ThemedText>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={onPress}>
             <ThemedText style={styles.buttonText}>여행 계획하러 가기</ThemedText>
             <ThemedText style={styles.arrow}>→</ThemedText>
           </TouchableOpacity>
@@ -22,7 +22,7 @@ export const AIBanner: React.FC<AIBannerProps> = ({ onPress }) => {
           <ThemedText style={styles.emoji}>👩‍💻</ThemedText>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
