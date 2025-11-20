@@ -23,9 +23,8 @@ export default function PlanTripScreen() {
   };
 
   const handleNext = () => {
-    // TODO: 다음 단계로 이동
-    console.log('Selected companions:', selectedCompanions);
-    console.log('Direct input:', directInput);
+    // 다음 단계로 이동
+    router.push('/plan-trip-step2');
   };
 
   return (
