@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -165,23 +165,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingVertical: 4,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingRight: 4,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333333',
   },
   arrow: {
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+    borderRadius: 16,
   },
   arrowText: {
-    fontSize: 16,
-    color: '#999999',
+    fontSize: 18,
+    color: '#007AFF',
     fontWeight: 'bold',
   },
 });
