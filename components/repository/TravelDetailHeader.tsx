@@ -31,9 +31,9 @@ export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDe
       console.log('Using router.back()...');
       router.back();
     } else {
-      console.log('Cannot go back with router');
+      console.log('Cannot go back with  router');
     }
-  };
+  }
 
 
 
