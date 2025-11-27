@@ -4,26 +4,27 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const tripDurations = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일', '5박 6일'];
+const companions = ['본인', '친구', '연인', '가족', '아이', '부모님'];
 
-export default function PlanTripStep3Screen() {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState('');
-  const [customInput, setCustomInput] = useState('');
+export default function PlanTripScreen() {
+  const [selectedCompanions, setSelectedCompanions] = useState<string[]>([]);
+  const [directInput, setDirectInput] = useState('');
 
   const handleBackPress = () => {
     router.back();
   };
 
-  const handleDurationSelect = (duration: string) => {
-    setSelectedDuration(duration);
-    setCustomInput('');
+  const toggleCompanion = (companion: string) => {
+    if (selectedCompanions.includes(companion)) {
+      setSelectedCompanions(selectedCompanions.filter(c => c !== companion));
+    } else {
+      setSelectedCompanions([...selectedCompanions, companion]);
+    }
   };
 
   const handleNext = () => {
     // 다음 단계로 이동
-    router.push('/plan-trip-step4');
+    router.push('/ai-chat/plan-trip-step2');
   };
 
   return (
@@ -46,70 +47,50 @@ export default function PlanTripStep3Screen() {
         >
           {/* 진행 단계 */}
           <View style={styles.progressContainer}>
-            <ThemedText style={styles.progressText}>단계 3/5</ThemedText>
+            <ThemedText style={styles.progressText}>단계 1/5</ThemedText>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: '60%' }]} />
+              <View style={[styles.progressFill, { width: '20%' }]} />
             </View>
           </View>
 
           {/* 질문 */}
           <View style={styles.questionContainer}>
-            <ThemedText style={styles.question}>언제 여행을 가시나요?</ThemedText>
-            <ThemedText style={styles.questionSubtitle}>여행 날짜나 기간을 선택해주세요</ThemedText>
+            <ThemedText style={styles.question}>누구와 함께 여행하시나요?</ThemedText>
+            <ThemedText style={styles.questionSubtitle}>여행 인원을 선택해주세요</ThemedText>
           </View>
 
-          {/* 날짜 선택 */}
-          <View style={styles.dateContainer}>
-            <ThemedText style={styles.sectionLabel}>출발일 - 도착일</ThemedText>
-            <View style={styles.dateInputRow}>
-              <TouchableOpacity style={styles.dateInput}>
-                <ThemedText style={styles.dateIcon}>📅</ThemedText>
-              </TouchableOpacity>
-              <ThemedText style={styles.dateSeparator}>또는</ThemedText>
-              <TouchableOpacity style={styles.dateInput}>
-                <ThemedText style={styles.dateIcon}>📅</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* 여행 일수 */}
-          <View style={styles.durationContainer}>
-            <ThemedText style={styles.sectionLabel}>여행 일수</ThemedText>
-            <View style={styles.durationGrid}>
-              {tripDurations.map((duration, index) => (
-                <TouchableOpacity
-                  key={index}
+          {/* 선택 옵션 */}
+          <View style={styles.optionsContainer}>
+            {companions.map((companion, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.optionButton,
+                  selectedCompanions.includes(companion) && styles.optionButtonSelected
+                ]}
+                onPress={() => toggleCompanion(companion)}
+              >
+                <ThemedText
                   style={[
-                    styles.durationButton,
-                    selectedDuration === duration && styles.durationButtonSelected
+                    styles.optionText,
+                    selectedCompanions.includes(companion) && styles.optionTextSelected
                   ]}
-                  onPress={() => handleDurationSelect(duration)}
                 >
-                  <ThemedText
-                    style={[
-                      styles.durationText,
-                      selectedDuration === duration && styles.durationTextSelected
-                    ]}
-                  >
-                    {duration}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {companion}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {/* 직접 입력 */}
           <View style={styles.inputContainer}>
-            <ThemedText style={styles.sectionLabel}>직접 입력</ThemedText>
+            <ThemedText style={styles.inputLabel}>직접 입력</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="예: 7일, 10일, 2주.."
+              placeholder="예: 친구 3명, 가족 4명"
               placeholderTextColor="#999999"
-              value={customInput}
-              onChangeText={(text) => {
-                setCustomInput(text);
-                setSelectedDuration('');
-              }}
+              value={directInput}
+              onChangeText={setDirectInput}
             />
           </View>
         </ScrollView>
@@ -119,10 +100,10 @@ export default function PlanTripStep3Screen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (selectedDuration || customInput.trim()) && styles.nextButtonActive
+              (selectedCompanions.length > 0 || directInput.trim()) && styles.nextButtonActive
             ]}
             onPress={handleNext}
-            disabled={!selectedDuration && !customInput.trim()}
+            disabled={selectedCompanions.length === 0 && !directInput.trim()}
           >
             <ThemedText style={styles.nextButtonText}>다음 단계</ThemedText>
           </TouchableOpacity>
@@ -178,7 +159,7 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     paddingHorizontal: 16,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   question: {
     fontSize: 24,
@@ -190,71 +171,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
-  dateContainer: {
+  optionsContainer: {
     paddingHorizontal: 16,
-    marginBottom: 32,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 12,
-  },
-  dateInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dateInput: {
-    flex: 1,
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
-    backgroundColor: '#FAFAFA',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateIcon: {
-    fontSize: 24,
-  },
-  dateSeparator: {
-    fontSize: 14,
-    color: '#999999',
-    marginHorizontal: 12,
-  },
-  durationContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 32,
-  },
-  durationGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    marginBottom: 32,
   },
-  durationButton: {
+  optionButton: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     borderRadius: 24,
     borderWidth: 1.5,
     borderColor: '#E0E0E0',
     backgroundColor: '#FFFFFF',
   },
-  durationButtonSelected: {
+  optionButtonSelected: {
     borderColor: '#4ECDC4',
     backgroundColor: '#E8F9F8',
   },
-  durationText: {
-    fontSize: 15,
+  optionText: {
+    fontSize: 16,
     fontWeight: '500',
     color: '#666666',
   },
-  durationTextSelected: {
+  optionTextSelected: {
     color: '#4ECDC4',
     fontWeight: '600',
   },
   inputContainer: {
     paddingHorizontal: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 12,
   },
   input: {
     borderWidth: 1,
@@ -264,7 +216,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#333333',
-    backgroundColor: '#FAFAFA',
   },
   bottomContainer: {
     padding: 16,

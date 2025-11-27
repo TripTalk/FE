@@ -17,7 +17,7 @@ export default function PlanTripStep2Screen() {
 
   const handleNext = () => {
     // 다음 단계로 이동
-    router.push('/plan-trip-step3');
+    router.push('/ai-chat/plan-trip-step3');
   };
 
   return (

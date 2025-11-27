@@ -20,15 +20,15 @@ export default function HomeScreen() {
   };
 
   const handleDestinationPress = () => {
-    router.push('/destinations');
+    router.push('/home/destinations');
   };
 
   const handleAccommodationPress = () => {
-    router.push('/accommodation');
+    router.push('/home/accommodation');
   };
 
   const handlePlanTripPress = () => {
-    router.push('/plan-trip');
+    router.push('/ai-chat/plan-trip');
   };
 
   return (

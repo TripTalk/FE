@@ -7,15 +7,15 @@ const { width } = Dimensions.get('window');
 
 const onboardingData = [
   {
-    image: require('../assets/images/onboarding1.png'),
+    image: require('../../assets/images/onboarding1.png'),
     title: '복잡한 여행 계획\nAI와 채팅으로 간단하게',
   },
   {
-    image: require('../assets/images/onboarding2.png'),
+    image: require('../../assets/images/onboarding2.png'),
     title: '숙박과 항공까지\n필요한 정보를 한 번에',
   },
   {
-    image: require('../assets/images/onboarding3.png'),
+    image: require('../../assets/images/onboarding3.png'),
     title: '여행 일정 저장부터\n수정, 공유까지 편하게',
   },
 ];

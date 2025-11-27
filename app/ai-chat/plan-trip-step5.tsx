@@ -13,7 +13,7 @@ export default function PlanTripStep5Screen() {
 
   const handleComplete = () => {
     // AI 채팅 화면으로 이동
-    router.push('/ai-chat');
+    router.push('/ai-chat/chat');
   };
 
   return (

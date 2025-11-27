@@ -18,7 +18,7 @@ export default function StartScreen() {
       <View style={styles.logoSection}>
         <View style={styles.logoRow}>
           <Image
-            source={require('../assets/images/triptalk_icon.png')}
+            source={require('../../assets/images/triptalk_icon.png')}
             style={styles.iconImage}
             resizeMode="contain"
           />
@@ -30,7 +30,7 @@ export default function StartScreen() {
       {/* Illustration Section */}
       <View style={styles.illustrationSection}>
         <Image
-          source={require('../assets/images/start.png')}
+          source={require('../../assets/images/start.png')}
           style={styles.illustrationImage}
           resizeMode="contain"
         />

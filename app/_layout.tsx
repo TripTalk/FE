@@ -12,13 +12,12 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="start" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="onboarding1" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="signup-step1" options={{ headerShown: false }} />
-        <Stack.Screen name="signup-step2" options={{ headerShown: false }} />
-        <Stack.Screen name="signup-step3" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen name="ai-chat" options={{ headerShown: false }} />
+        <Stack.Screen name="repository" options={{ headerShown: false }} />
+        <Stack.Screen name="mypage" options={{ headerShown: false }} />
         <Stack.Screen name="travel/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
