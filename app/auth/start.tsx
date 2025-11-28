@@ -9,7 +9,7 @@ export default function StartScreen() {
   const router = useRouter();
 
   const handleStart = () => {
-    router.push('onboarding1' as any);
+    router.push('/auth/onboarding1' as any);
   };
 
   return (

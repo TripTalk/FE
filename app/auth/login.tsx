@@ -12,7 +12,7 @@ export default function LoginScreen() {
 
   const handleLogin = () => {
     if (email.trim() && password.trim()) {
-      router.push('(tabs)' as any);
+      router.push('/(tabs)' as any);
     }
   };
 
@@ -33,12 +33,12 @@ export default function LoginScreen() {
         {/* Background Images */}
         <View style={styles.imageContainer}>
           <Image
-            source={require('../assets/images/landmark.png')}
+            source={require('../../assets/images/landmark.png')}
             style={[styles.landmarkImage, { opacity: 0.75 }]}
             resizeMode="cover"
           />
           <Image
-            source={require('../assets/images/person1.png')}
+            source={require('../../assets/images/person1.png')}
             style={styles.personImage}
             resizeMode="contain"
           />

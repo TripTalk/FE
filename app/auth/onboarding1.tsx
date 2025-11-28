@@ -103,16 +103,16 @@ export default function OnboardingScreen() {
     if (currentPage < onboardingData.length - 1) {
       setCurrentPage(currentPage + 1);
     } else {
-      router.push('signup-step1' as any);
+      router.push('/auth/signup-step1' as any);
     }
   };
 
   const handleLogin = () => {
-    router.push('login' as any);
+    router.push('/auth/login' as any);
   };
 
   const handleSignup = () => {
-    router.push('signup-step1' as any);
+    router.push('/auth/signup-step1' as any);
   };
 
   const renderItem = ({ item }: { item: typeof onboardingData[0] }) => (

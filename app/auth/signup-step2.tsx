@@ -14,7 +14,7 @@ export default function SignupStep2Screen() {
 
   const handleNext = () => {
     if (isPasswordValid) {
-      router.push('signup-step3' as any);
+      router.push('/auth/signup-step3' as any);
     }
   };
 

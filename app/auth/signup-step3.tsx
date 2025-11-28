@@ -61,7 +61,7 @@ export default function SignupStep4Screen() {
   const handleAgreementConfirm = () => {
     if (allRequiredChecked) {
       setShowAgreementModal(false);
-      router.push('(tabs)' as any);
+      router.push('/(tabs)' as any);
     }
   };
 

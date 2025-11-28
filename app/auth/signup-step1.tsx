@@ -11,7 +11,7 @@ export default function SignupStep1Screen() {
 
   const handleNext = () => {
     if (email.trim()) {
-      router.push('signup-step2' as any);
+      router.push('/auth/signup-step2' as any);
     }
   };
 
