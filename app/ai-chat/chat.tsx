@@ -1,7 +1,9 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { sendFeedback } from '@/services/api';
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -29,35 +31,51 @@ export default function AIChatScreen() {
     }
   ]);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const handleBackPress = () => {
     router.back();
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleSend = async () => {
+    if (!inputText.trim() || isLoading) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       text: inputText,
       isUser: true,
       timestamp: new Date(),
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputText('');
+    setIsLoading(true);
 
-    // AI 응답 시뮬레이션
-    setTimeout(() => {
+    try {
+      // FastAPI /feedback 엔드포인트 호출
+      const response = await sendFeedback(inputText);
+      
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: '네, 알겠습니다! 그 부분을 반영해서 일정을 조정해드릴게요.',
+        text: response.reply,
         isUser: false,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+    } catch (error) {
+      // 에러 시 사용자에게 알림
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: '서버 연결에 실패했습니다. FastAPI 서버가 실행 중인지 확인해주세요.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      console.error('API 오류:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -116,6 +134,12 @@ export default function AIChatScreen() {
                 </ThemedText>
               </View>
             ))}
+            {isLoading && (
+              <View style={[styles.messageBubble, styles.aiBubble, styles.loadingBubble]}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ThemedText style={styles.loadingText}>AI 응답 중...</ThemedText>
+              </View>
+            )}
           </ScrollView>
 
           {/* 입력 영역 */}
@@ -136,10 +160,10 @@ export default function AIChatScreen() {
               <TouchableOpacity 
                 style={[
                   styles.sendButton,
-                  inputText.trim() && styles.sendButtonActive
+                  inputText.trim() && !isLoading && styles.sendButtonActive
                 ]}
                 onPress={handleSend}
-                disabled={!inputText.trim()}
+                disabled={!inputText.trim() || isLoading}
               >
                 <ThemedText style={styles.sendIcon}>➤</ThemedText>
               </TouchableOpacity>
@@ -209,6 +233,15 @@ const styles = StyleSheet.create({
   aiBubble: {
     alignSelf: 'flex-start',
     backgroundColor: '#4ECDC4',
+  },
+  loadingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   messageText: {
     fontSize: 15,
