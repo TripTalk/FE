@@ -1,16 +1,41 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const tripDurations = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일', '5박 6일'];
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+// 달력 헬퍼 함수들
+const getDaysInMonth = (year: number, month: number) => {
+  return new Date(year, month + 1, 0).getDate();
+};
+
+const getFirstDayOfMonth = (year: number, month: number) => {
+  return new Date(year, month, 1).getDay();
+};
+
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+};
+
 export default function PlanTripStep3Screen() {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedDuration, setSelectedDuration] = useState('');
   const [customInput, setCustomInput] = useState('');
+  
+  // 달력 모달 상태
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectingStartDate, setSelectingStartDate] = useState(true);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
   const handleBackPress = () => {
     router.back();
@@ -24,6 +49,106 @@ export default function PlanTripStep3Screen() {
   const handleNext = () => {
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step4');
+  };
+
+  // 달력 열기
+  const openCalendar = (isStart: boolean) => {
+    setSelectingStartDate(isStart);
+    setShowCalendar(true);
+  };
+
+  // 날짜 선택
+  const handleDateSelect = (day: number) => {
+    const selectedDate = new Date(currentYear, currentMonth, day);
+    
+    if (selectingStartDate) {
+      setStartDate(selectedDate);
+      // 시작일을 선택하면 자동으로 종료일 선택으로 전환
+      if (!endDate || selectedDate > endDate) {
+        setEndDate(null);
+      }
+      setSelectingStartDate(false);
+    } else {
+      if (startDate && selectedDate < startDate) {
+        // 종료일이 시작일보다 이전이면 시작일로 설정
+        setStartDate(selectedDate);
+      } else {
+        setEndDate(selectedDate);
+        setShowCalendar(false);
+      }
+    }
+    
+    // 날짜를 직접 선택하면 기간 선택 초기화
+    setSelectedDuration('');
+    setCustomInput('');
+  };
+
+  // 이전 달
+  const goToPrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  // 다음 달
+  const goToNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  // 달력 날짜 생성
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+    const days = [];
+
+    // 빈 셀 추가
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<View key={`empty-${i}`} style={styles.calendarDay} />);
+    }
+
+    // 날짜 셀 추가
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(currentYear, currentMonth, day);
+      const isStartDate = startDate && currentDate.toDateString() === startDate.toDateString();
+      const isEndDate = endDate && currentDate.toDateString() === endDate.toDateString();
+      const isInRange = startDate && endDate && currentDate > startDate && currentDate < endDate;
+      const isToday = currentDate.toDateString() === new Date().toDateString();
+      const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0));
+
+      days.push(
+        <TouchableOpacity
+          key={day}
+          style={[
+            styles.calendarDay,
+            isInRange && styles.calendarDayInRange,
+            (isStartDate || isEndDate) && styles.calendarDaySelected,
+          ]}
+          onPress={() => !isPast && handleDateSelect(day)}
+          disabled={isPast}
+        >
+          <ThemedText
+            style={[
+              styles.calendarDayText,
+              isPast && styles.calendarDayTextPast,
+              isToday && styles.calendarDayTextToday,
+              (isStartDate || isEndDate) && styles.calendarDayTextSelected,
+            ]}
+          >
+            {day}
+          </ThemedText>
+        </TouchableOpacity>
+      );
+    }
+
+    return days;
   };
 
   return (
@@ -62,12 +187,26 @@ export default function PlanTripStep3Screen() {
           <View style={styles.dateContainer}>
             <ThemedText style={styles.sectionLabel}>출발일 - 도착일</ThemedText>
             <View style={styles.dateInputRow}>
-              <TouchableOpacity style={styles.dateInput}>
-                <ThemedText style={styles.dateIcon}>📅</ThemedText>
+              <TouchableOpacity 
+                style={[styles.dateInput, startDate && styles.dateInputSelected]} 
+                onPress={() => openCalendar(true)}
+              >
+                {startDate ? (
+                  <ThemedText style={styles.dateText}>{formatDate(startDate)}</ThemedText>
+                ) : (
+                  <ThemedText style={styles.dateIcon}>📅</ThemedText>
+                )}
               </TouchableOpacity>
               <ThemedText style={styles.dateSeparator}>또는</ThemedText>
-              <TouchableOpacity style={styles.dateInput}>
-                <ThemedText style={styles.dateIcon}>📅</ThemedText>
+              <TouchableOpacity 
+                style={[styles.dateInput, endDate && styles.dateInputSelected]} 
+                onPress={() => openCalendar(false)}
+              >
+                {endDate ? (
+                  <ThemedText style={styles.dateText}>{formatDate(endDate)}</ThemedText>
+                ) : (
+                  <ThemedText style={styles.dateIcon}>📅</ThemedText>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -119,14 +258,83 @@ export default function PlanTripStep3Screen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (selectedDuration || customInput.trim()) && styles.nextButtonActive
+              (selectedDuration || customInput.trim() || (startDate && endDate)) && styles.nextButtonActive
             ]}
             onPress={handleNext}
-            disabled={!selectedDuration && !customInput.trim()}
+            disabled={!selectedDuration && !customInput.trim() && !(startDate && endDate)}
           >
             <ThemedText style={styles.nextButtonText}>다음 단계</ThemedText>
           </TouchableOpacity>
         </View>
+
+        {/* 달력 모달 */}
+        <Modal
+          visible={showCalendar}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowCalendar(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowCalendar(false)}>
+            <Pressable style={styles.calendarModal} onPress={(e) => e.stopPropagation()}>
+              {/* 달력 헤더 */}
+              <View style={styles.calendarHeader}>
+                <TouchableOpacity onPress={goToPrevMonth} style={styles.calendarNavButton}>
+                  <ThemedText style={styles.calendarNavText}>{'<'}</ThemedText>
+                </TouchableOpacity>
+                <ThemedText style={styles.calendarTitle}>
+                  {currentYear}년 {MONTHS[currentMonth]}
+                </ThemedText>
+                <TouchableOpacity onPress={goToNextMonth} style={styles.calendarNavButton}>
+                  <ThemedText style={styles.calendarNavText}>{'>'}</ThemedText>
+                </TouchableOpacity>
+              </View>
+
+              {/* 선택 안내 */}
+              <View style={styles.selectionGuide}>
+                <ThemedText style={styles.selectionGuideText}>
+                  {selectingStartDate ? '출발일을 선택하세요' : '도착일을 선택하세요'}
+                </ThemedText>
+              </View>
+
+              {/* 요일 헤더 */}
+              <View style={styles.weekdayRow}>
+                {WEEKDAYS.map((day, index) => (
+                  <View key={index} style={styles.weekdayCell}>
+                    <ThemedText style={[
+                      styles.weekdayText,
+                      index === 0 && styles.weekdaySunday,
+                      index === 6 && styles.weekdaySaturday,
+                    ]}>
+                      {day}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+
+              {/* 날짜 그리드 */}
+              <View style={styles.calendarGrid}>
+                {renderCalendarDays()}
+              </View>
+
+              {/* 선택된 날짜 표시 */}
+              {(startDate || endDate) && (
+                <View style={styles.selectedDatesContainer}>
+                  <ThemedText style={styles.selectedDatesText}>
+                    {startDate ? formatDate(startDate) : '시작일'} ~ {endDate ? formatDate(endDate) : '종료일'}
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* 확인 버튼 */}
+              <TouchableOpacity
+                style={[styles.confirmButton, (!startDate || !endDate) && styles.confirmButtonDisabled]}
+                onPress={() => setShowCalendar(false)}
+              >
+                <ThemedText style={styles.confirmButtonText}>확인</ThemedText>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -215,8 +423,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dateInputSelected: {
+    borderColor: '#4ECDC4',
+    backgroundColor: '#E8F9F8',
+  },
   dateIcon: {
     fontSize: 24,
+  },
+  dateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4ECDC4',
   },
   dateSeparator: {
     fontSize: 14,
@@ -284,6 +501,130 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
+    fontWeight: '600',
+  },
+  // 달력 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    maxWidth: 360,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  calendarNavButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarNavText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4ECDC4',
+  },
+  calendarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333333',
+  },
+  selectionGuide: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  selectionGuideText: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    fontWeight: '600',
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  weekdayCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  weekdayText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  weekdaySunday: {
+    color: '#FF6B6B',
+  },
+  weekdaySaturday: {
+    color: '#4ECDC4',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  calendarDay: {
+    width: '14.28%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarDayInRange: {
+    backgroundColor: '#E8F9F8',
+  },
+  calendarDaySelected: {
+    backgroundColor: '#4ECDC4',
+    borderRadius: 20,
+  },
+  calendarDayText: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  calendarDayTextPast: {
+    color: '#CCCCCC',
+  },
+  calendarDayTextToday: {
+    fontWeight: 'bold',
+    color: '#4ECDC4',
+  },
+  calendarDayTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  selectedDatesContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+  },
+  selectedDatesText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  confirmButton: {
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: '#B0B0B0',
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
   },
 });
