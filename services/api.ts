@@ -4,7 +4,7 @@
 // - iOS 시뮬레이터: localhost 사용 가능
 // - Android 에뮬레이터: 10.0.2.2 사용
 // - 실제 기기: 컴퓨터 IP 주소 사용 (예: 192.168.0.10)
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // 여행 계획 요청 타입
 export interface TravelPlanRequest {

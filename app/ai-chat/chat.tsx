@@ -55,10 +55,11 @@ export default function AIChatScreen() {
     try {
       // FastAPI /feedback 엔드포인트 호출
       const response = await sendFeedback(inputText);
+      console.log('API 응답:', response);
       
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.reply,
+        text: response.reply || '응답을 받지 못했습니다.',
         isUser: false,
         timestamp: new Date(),
       };
