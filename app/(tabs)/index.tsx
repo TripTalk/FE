@@ -20,11 +20,11 @@ export default function HomeScreen() {
   };
 
   const handleDestinationPress = () => {
-    router.push('/destinations');
+    router.push('/home/destinations');
   };
 
   const handleAccommodationPress = () => {
-    router.push('/accommodation');
+    router.push('/home/accommodation');
   };
 
   const handlePlanTripPress = () => {
@@ -40,7 +40,7 @@ export default function HomeScreen() {
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.scrollContent}ㄴ
         showsVerticalScrollIndicator={false}
       >
         {/* AI Banner */}

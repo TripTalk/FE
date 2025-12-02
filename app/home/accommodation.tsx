@@ -138,11 +138,6 @@ export default function AccommodationScreen() {
       <Stack.Screen 
         options={{
           title: '숙박·항공',
-          headerLeft: () => (
-            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-              <ThemedText style={styles.backButtonText}>{'<'}</ThemedText>
-            </TouchableOpacity>
-          ),
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -219,18 +214,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-  },
-  backButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  backButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
   },
   scrollView: {
     flex: 1,
