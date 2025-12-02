@@ -14,16 +14,10 @@ export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDe
   const handleBackPress = () => {
     console.log('=== Back button pressed ===');
     console.log('onBack exists:', !!onBack);
-    console.log('router.canGoBack():', router.canGoBack());
     
     if (onBack) {
       console.log('Executing onBack callback...');
-      try {
-        onBack();
-        console.log('onBack callback executed successfully');
-      } catch (error) {
-        console.error('Error executing onBack:', error);
-      }
+      onBack();
       return;
     }
     
@@ -31,12 +25,9 @@ export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDe
       console.log('Using router.back()...');
       router.back();
     } else {
-      console.log('Cannot go back with  router');
+      console.log('Cannot go back with router');
     }
-  }
-
-
-
+  };
 
   return (
     <View style={styles.container}>
@@ -44,8 +35,7 @@ export function TravelDetailHeader({ title, canGoBack = true, onBack }: TravelDe
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={handleBackPress}
-          activeOpacity={0.7}
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          activeOpacity={0.6}
         >
           <IconSymbol name="chevron.left" size={28} color="#333333" />
         </TouchableOpacity>

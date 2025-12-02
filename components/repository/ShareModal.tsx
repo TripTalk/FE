@@ -28,17 +28,24 @@ interface ShareModalProps {
 export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
   const handleClose = () => {
     console.log('ShareModal handleClose called - closing modal');
-    onClose();
+    if (onClose) {
+      onClose();
+    }
   };
 
   React.useEffect(() => {
     console.log('ShareModal mounted/updated', { visible });
   }, [visible]);
 
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal
       visible={visible}
       animationType="slide"
+      presentationStyle="fullScreen"
       onRequestClose={handleClose}
     >
       <SafeAreaView style={styles.modalContainer}>
