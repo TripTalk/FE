@@ -102,27 +102,13 @@ export function ShareModal({ visible, onClose, travelData }: ShareModalProps) {
             </View>
           </ThemedView>
 
-          {/* 공유 버튼들 */}
+          {/* 공유 버튼 */}
           <View style={styles.shareButtons}>
-            <TouchableOpacity style={[styles.shareButton, styles.messageButton]}>
-              <View style={styles.shareButtonIconContainer}>
-                <ThemedText style={styles.shareButtonIcon}>📩</ThemedText>
-              </View>
-              <ThemedText style={[styles.shareButtonText, styles.messageButtonText]}>메시지로 공유하기</ThemedText>
-            </TouchableOpacity>
-
             <TouchableOpacity style={[styles.shareButton, styles.linkButton]}>
               <View style={styles.shareButtonIconContainer}>
                 <ThemedText style={styles.shareButtonIcon}>🔗</ThemedText>
               </View>
               <ThemedText style={[styles.shareButtonText, styles.linkButtonText]}>링크 공유하기</ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.shareButton, styles.cameraButton]}>
-              <View style={styles.shareButtonIconContainer}>
-                <ThemedText style={styles.shareButtonIcon}>📷</ThemedText>
-              </View>
-              <ThemedText style={[styles.shareButtonText, styles.cameraButtonText]}>카카오톡으로 공유</ThemedText>
             </TouchableOpacity>
           </View>
           </View>
@@ -232,7 +218,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   shareButtons: {
-    gap: 16,
     marginBottom: 40,
   },
   shareButton: {
@@ -250,14 +235,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  messageButton: {
-    backgroundColor: '#8B5CF6',
-  },
   linkButton: {
     backgroundColor: '#3B82F6',
-  },
-  cameraButton: {
-    backgroundColor: '#F59E0B',
   },
   shareButtonIconContainer: {
     marginRight: 12,
@@ -271,13 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  messageButtonText: {
-    color: '#FFFFFF',
-  },
   linkButtonText: {
-    color: '#FFFFFF',
-  },
-  cameraButtonText: {
     color: '#FFFFFF',
   },
 });
