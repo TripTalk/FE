@@ -203,15 +203,6 @@ export default function AIChatScreen() {
           style={styles.keyboardView}
           keyboardVerticalOffset={0}
         >
-          {/* 여행지 정보 */}
-          <View style={styles.infoBar}>
-            <ThemedText style={styles.infoTitle}>{travelPlan.destination || '제주도'}</ThemedText>
-            <TouchableOpacity style={styles.detailButton}>
-              <ThemedText style={styles.detailButtonText}>전체보기</ThemedText>
-              <ThemedText style={styles.arrow}>{'>'}</ThemedText>
-            </TouchableOpacity>
-          </View>
-
           {/* 채팅 메시지 영역 */}
           <ScrollView 
             ref={scrollViewRef}
@@ -301,34 +292,6 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
-  },
-  infoBar: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  detailButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  detailButtonText: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  arrow: {
-    fontSize: 14,
-    color: '#666666',
   },
   messagesContainer: {
     flex: 1,
