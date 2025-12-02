@@ -2,10 +2,8 @@ import { ThemedText } from '@/components/shared/themed-text';
 import { useTravelPlan } from '@/contexts/TravelPlanContext';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const tripDurations = ['당일치기', '1박 2일', '2박 3일', '3박 4일', '4박 5일', '5박 6일'];
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
@@ -30,8 +28,6 @@ export default function PlanTripStep3Screen() {
   const { updateTravelPlan } = useTravelPlan();
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState('');
-  const [customInput, setCustomInput] = useState('');
   
   // 달력 모달 상태
   const [showCalendar, setShowCalendar] = useState(false);
@@ -43,18 +39,11 @@ export default function PlanTripStep3Screen() {
     router.back();
   };
 
-  const handleDurationSelect = (duration: string) => {
-    setSelectedDuration(duration);
-    setCustomInput('');
-  };
-
   const handleNext = () => {
     // Context에 날짜 정보 저장
-    const duration = customInput.trim() || selectedDuration;
     updateTravelPlan({
       startDate: startDate ? formatDate(startDate) : '',
       endDate: endDate ? formatDate(endDate) : '',
-      duration: duration,
     });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step4');
@@ -86,10 +75,6 @@ export default function PlanTripStep3Screen() {
         setShowCalendar(false);
       }
     }
-    
-    // 날짜를 직접 선택하면 기간 선택 초기화
-    setSelectedDuration('');
-    setCustomInput('');
   };
 
   // 이전 달
@@ -219,47 +204,6 @@ export default function PlanTripStep3Screen() {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* 여행 일수 */}
-          <View style={styles.durationContainer}>
-            <ThemedText style={styles.sectionLabel}>여행 일수</ThemedText>
-            <View style={styles.durationGrid}>
-              {tripDurations.map((duration, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.durationButton,
-                    selectedDuration === duration && styles.durationButtonSelected
-                  ]}
-                  onPress={() => handleDurationSelect(duration)}
-                >
-                  <ThemedText
-                    style={[
-                      styles.durationText,
-                      selectedDuration === duration && styles.durationTextSelected
-                    ]}
-                  >
-                    {duration}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* 직접 입력 */}
-          <View style={styles.inputContainer}>
-            <ThemedText style={styles.sectionLabel}>직접 입력</ThemedText>
-            <TextInput
-              style={styles.input}
-              placeholder="예: 7일, 10일, 2주.."
-              placeholderTextColor="#999999"
-              value={customInput}
-              onChangeText={(text) => {
-                setCustomInput(text);
-                setSelectedDuration('');
-              }}
-            />
-          </View>
         </ScrollView>
 
         {/* 다음 단계 버튼 */}
@@ -267,10 +211,10 @@ export default function PlanTripStep3Screen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (selectedDuration || customInput.trim() || (startDate && endDate)) && styles.nextButtonActive
+              (startDate && endDate) && styles.nextButtonActive
             ]}
             onPress={handleNext}
-            disabled={!selectedDuration && !customInput.trim() && !(startDate && endDate)}
+            disabled={!(startDate && endDate)}
           >
             <ThemedText style={styles.nextButtonText}>다음 단계</ThemedText>
           </TouchableOpacity>
@@ -301,7 +245,7 @@ export default function PlanTripStep3Screen() {
               {/* 선택 안내 */}
               <View style={styles.selectionGuide}>
                 <ThemedText style={styles.selectionGuideText}>
-                  {selectingStartDate ? '출발일을 선택하세요' : '도착일을 선택하세요'}
+                  {selectingStartDate ? '출발일을 선택하세요' : '종료일을 선택하세요'}
                 </ThemedText>
               </View>
 
@@ -371,6 +315,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
+    paddingTop: 10,
   },
   progressContainer: {
     paddingHorizontal: 16,
@@ -395,6 +340,7 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     paddingHorizontal: 16,
+    marginTop: 16,
     marginBottom: 24,
   },
   question: {
@@ -448,49 +394,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999999',
     marginHorizontal: 12,
-  },
-  durationContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 32,
-  },
-  durationGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  durationButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
-  },
-  durationButtonSelected: {
-    borderColor: '#4ECDC4',
-    backgroundColor: '#E8F9F8',
-  },
-  durationText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#666666',
-  },
-  durationTextSelected: {
-    color: '#4ECDC4',
-    fontWeight: '600',
-  },
-  inputContainer: {
-    paddingHorizontal: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#333333',
-    backgroundColor: '#FAFAFA',
   },
   bottomContainer: {
     padding: 16,
