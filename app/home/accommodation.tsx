@@ -4,16 +4,16 @@ import { ThemedView } from '@/components/shared/themed-view';
 import { router, Stack } from 'expo-router';
 import React from 'react';
 import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
   Easing,
   FadeIn,
   FadeOut,
   Layout,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
