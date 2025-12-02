@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useTravelPlan } from '@/contexts/TravelPlanContext';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
@@ -8,6 +9,7 @@ const destinations = ['제주도', '부산', '강릉', '도쿄', '오사카'];
 const popularDestinations = ['제주도', '부산', '강릉', '도쿄', '오사카'];
 
 export default function PlanTripStep2Screen() {
+  const { updateTravelPlan } = useTravelPlan();
   const [whereInput, setWhereInput] = useState('');
   const [destination, setDestination] = useState('');
 
@@ -16,6 +18,11 @@ export default function PlanTripStep2Screen() {
   };
 
   const handleNext = () => {
+    // Context에 출발지와 여행지 정보 저장
+    updateTravelPlan({ 
+      departure: whereInput,
+      destination: destination 
+    });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step3');
   };

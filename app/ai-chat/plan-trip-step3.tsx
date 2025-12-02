@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useTravelPlan } from '@/contexts/TravelPlanContext';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
@@ -26,6 +27,7 @@ const formatDate = (date: Date) => {
 };
 
 export default function PlanTripStep3Screen() {
+  const { updateTravelPlan } = useTravelPlan();
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedDuration, setSelectedDuration] = useState('');
@@ -47,6 +49,13 @@ export default function PlanTripStep3Screen() {
   };
 
   const handleNext = () => {
+    // Context에 날짜 정보 저장
+    const duration = customInput.trim() || selectedDuration;
+    updateTravelPlan({
+      startDate: startDate ? formatDate(startDate) : '',
+      endDate: endDate ? formatDate(endDate) : '',
+      duration: duration,
+    });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step4');
   };
@@ -185,7 +194,7 @@ export default function PlanTripStep3Screen() {
 
           {/* 날짜 선택 */}
           <View style={styles.dateContainer}>
-            <ThemedText style={styles.sectionLabel}>출발일 - 도착일</ThemedText>
+            <ThemedText style={styles.sectionLabel}>시작일 - 종료일</ThemedText>
             <View style={styles.dateInputRow}>
               <TouchableOpacity 
                 style={[styles.dateInput, startDate && styles.dateInputSelected]} 
@@ -197,7 +206,7 @@ export default function PlanTripStep3Screen() {
                   <ThemedText style={styles.dateIcon}>📅</ThemedText>
                 )}
               </TouchableOpacity>
-              <ThemedText style={styles.dateSeparator}>또는</ThemedText>
+              <ThemedText style={styles.dateSeparator}> ~ </ThemedText>
               <TouchableOpacity 
                 style={[styles.dateInput, endDate && styles.dateInputSelected]} 
                 onPress={() => openCalendar(false)}

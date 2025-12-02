@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,7 +28,7 @@ export default function HomeScreen() {
   };
 
   const handlePlanTripPress = () => {
-    router.push('/ai-chat/plan-trip');
+    router.push('/ai-chat/plan-trip-step1');
   };
 
   return (

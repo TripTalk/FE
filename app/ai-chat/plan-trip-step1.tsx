@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useTravelPlan } from '@/contexts/TravelPlanContext';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
@@ -7,22 +8,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const companions = ['본인', '친구', '연인', '가족', '아이', '부모님'];
 
 export default function PlanTripScreen() {
-  const [selectedCompanions, setSelectedCompanions] = useState<string[]>([]);
+  const { updateTravelPlan } = useTravelPlan();
+  const [selectedCompanion, setSelectedCompanion] = useState<string>('');
   const [directInput, setDirectInput] = useState('');
 
   const handleBackPress = () => {
     router.back();
   };
 
-  const toggleCompanion = (companion: string) => {
-    if (selectedCompanions.includes(companion)) {
-      setSelectedCompanions(selectedCompanions.filter(c => c !== companion));
+  const selectCompanion = (companion: string) => {
+    // 같은 항목 클릭 시 선택 해제, 아니면 새로 선택
+    if (selectedCompanion === companion) {
+      setSelectedCompanion('');
     } else {
-      setSelectedCompanions([...selectedCompanions, companion]);
+      setSelectedCompanion(companion);
+      setDirectInput(''); // 선택 시 직접 입력 초기화
     }
   };
 
   const handleNext = () => {
+    // Context에 동행자 정보 저장
+    const companionsText = directInput.trim() || selectedCompanion;
+    updateTravelPlan({ companions: companionsText });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step2');
   };
@@ -66,14 +73,14 @@ export default function PlanTripScreen() {
                 key={index}
                 style={[
                   styles.optionButton,
-                  selectedCompanions.includes(companion) && styles.optionButtonSelected
+                  selectedCompanion === companion && styles.optionButtonSelected
                 ]}
-                onPress={() => toggleCompanion(companion)}
+                onPress={() => selectCompanion(companion)}
               >
                 <ThemedText
                   style={[
                     styles.optionText,
-                    selectedCompanions.includes(companion) && styles.optionTextSelected
+                    selectedCompanion === companion && styles.optionTextSelected
                   ]}
                 >
                   {companion}
@@ -90,7 +97,10 @@ export default function PlanTripScreen() {
               placeholder="예: 친구 3명, 가족 4명"
               placeholderTextColor="#999999"
               value={directInput}
-              onChangeText={setDirectInput}
+              onChangeText={(text) => {
+                setDirectInput(text);
+                if (text.trim()) setSelectedCompanion(''); // 직접 입력 시 선택 초기화
+              }}
             />
           </View>
         </ScrollView>
@@ -100,10 +110,10 @@ export default function PlanTripScreen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (selectedCompanions.length > 0 || directInput.trim()) && styles.nextButtonActive
+              (selectedCompanion || directInput.trim()) && styles.nextButtonActive
             ]}
             onPress={handleNext}
-            disabled={selectedCompanions.length === 0 && !directInput.trim()}
+            disabled={!selectedCompanion && !directInput.trim()}
           >
             <ThemedText style={styles.nextButtonText}>다음 단계</ThemedText>
           </TouchableOpacity>

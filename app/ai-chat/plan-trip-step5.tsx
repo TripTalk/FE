@@ -1,10 +1,12 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useTravelPlan } from '@/contexts/TravelPlanContext';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PlanTripStep5Screen() {
+  const { updateTravelPlan } = useTravelPlan();
   const [budget, setBudget] = useState('');
 
   const handleBackPress = () => {
@@ -12,6 +14,8 @@ export default function PlanTripStep5Screen() {
   };
 
   const handleComplete = () => {
+    // Context에 예산 정보 저장
+    updateTravelPlan({ budget: `${budget}만원` });
     // AI 채팅 화면으로 이동
     router.push('/ai-chat/chat');
   };

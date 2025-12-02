@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useTravelPlan } from '@/contexts/TravelPlanContext';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -13,6 +14,7 @@ const travelStyles = [
 ];
 
 export default function PlanTripStep4Screen() {
+  const { updateTravelPlan } = useTravelPlan();
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
   const handleBackPress = () => {
@@ -30,6 +32,8 @@ export default function PlanTripStep4Screen() {
   };
 
   const handleNext = () => {
+    // Context에 여행 스타일 정보 저장
+    updateTravelPlan({ style: selectedStyles });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step5');
   };

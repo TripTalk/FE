@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/shared/themed-text';
-import { sendFeedback } from '@/services/api';
+import { useTravelPlan } from '@/contexts/TravelPlanContext';
+import { createTravelPlan, sendFeedback } from '@/services/api';
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -22,17 +23,89 @@ interface Message {
 }
 
 export default function AIChatScreen() {
+  const { travelPlan } = useTravelPlan();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '선택 드린 옵션들로 추천드는 일정을 만들어 드릴게요!',
+      text: '여행 일정을 생성하고 있어요! 잠시만 기다려주세요...',
       isUser: false,
       timestamp: new Date(),
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPlanCreated, setIsPlanCreated] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // 날짜 형식 변환 (YYYY-MM-DD -> YYYY.MM.DD)
+  const formatDateForAPI = (dateStr: string): string => {
+    if (!dateStr) return '';
+    // YYYY-MM-DD 형식을 YYYY.MM.DD로 변환 (FastAPI 형식에 맞춤)
+    return dateStr.replace(/-/g, '.');
+  };
+
+  // 화면 진입 시 여행 계획 자동 생성
+  useEffect(() => {
+    const generateInitialPlan = async () => {
+      setIsLoading(true);
+      try {
+        // Context에서 사용자가 선택한 데이터 사용
+        const travelData = {
+          companions: travelPlan.companions || '친구',
+          departure: travelPlan.departure || '서울',
+          destination: travelPlan.destination || '제주도',
+          start_date: formatDateForAPI(travelPlan.startDate) || '2025.12.10',
+          end_date: formatDateForAPI(travelPlan.endDate) || '2025.12.12',
+          style: travelPlan.style.length > 0 ? travelPlan.style : ['맛집', '관광'],
+          budget: travelPlan.budget || '50만원',
+        };
+
+        console.log('=== 여행 계획 API 요청 ===');
+        console.log('Context 데이터:', JSON.stringify(travelPlan, null, 2));
+        console.log('API 요청 데이터:', JSON.stringify(travelData, null, 2));
+        const response = await createTravelPlan(travelData);
+        console.log('여행 계획 생성 응답:', response);
+
+        const planText = response.plan || JSON.stringify(response);
+        
+        setMessages([
+          {
+            id: '1',
+            text: `${travelData.destination} 여행 일정을 만들었어요! 🎉`,
+            isUser: false,
+            timestamp: new Date(),
+          },
+          {
+            id: '2',
+            text: planText,
+            isUser: false,
+            timestamp: new Date(),
+          },
+          {
+            id: '3',
+            text: '일정을 수정하고 싶으시면 말씀해주세요!',
+            isUser: false,
+            timestamp: new Date(),
+          }
+        ]);
+        setIsPlanCreated(true);
+      } catch (error) {
+        console.error('여행 계획 생성 오류:', error);
+        setMessages([
+          {
+            id: '1',
+            text: '여행 일정 생성에 실패했습니다. 다시 시도해주세요.',
+            isUser: false,
+            timestamp: new Date(),
+          }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    generateInitialPlan();
+  }, [travelPlan]);
 
   const handleBackPress = () => {
     router.back();
@@ -55,11 +128,14 @@ export default function AIChatScreen() {
     try {
       // FastAPI /feedback 엔드포인트 호출
       const response = await sendFeedback(inputText);
-      console.log('API 응답:', response);
+      console.log('API 응답:', JSON.stringify(response));
+      
+      // 다양한 응답 형식 처리 (reply, response, message, text 등)
+      const replyText = response.reply || response.response || response.message || response.text || JSON.stringify(response);
       
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.reply || '응답을 받지 못했습니다.',
+        text: replyText,
         isUser: false,
         timestamp: new Date(),
       };
@@ -103,7 +179,7 @@ export default function AIChatScreen() {
         >
           {/* 여행지 정보 */}
           <View style={styles.infoBar}>
-            <ThemedText style={styles.infoTitle}>제주도</ThemedText>
+            <ThemedText style={styles.infoTitle}>{travelPlan.destination || '제주도'}</ThemedText>
             <TouchableOpacity style={styles.detailButton}>
               <ThemedText style={styles.detailButtonText}>전체보기</ThemedText>
               <ThemedText style={styles.arrow}>{'>'}</ThemedText>

@@ -4,7 +4,7 @@ export default function AIChatLayout() {
   return (
     <Stack>
       <Stack.Screen 
-        name="plan-trip" 
+        name="plan-trip-step1" 
         options={{ 
           headerShown: true,
           title: '여행 계획하기',
