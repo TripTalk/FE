@@ -20,7 +20,26 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  isExpanded?: boolean;
 }
+
+// 텍스트가 5줄을 초과하는지 확인하는 함수
+const isLongText = (text: string): boolean => {
+  const lines = text.split('\n');
+  return lines.length > 5 || text.length > 300;
+};
+
+// 텍스트를 5줄로 자르는 함수
+const truncateText = (text: string): string => {
+  const lines = text.split('\n');
+  if (lines.length > 5) {
+    return lines.slice(0, 5).join('\n') + '...';
+  }
+  if (text.length > 300) {
+    return text.slice(0, 300) + '...';
+  }
+  return text;
+};
 
 export default function AIChatScreen() {
   const { travelPlan } = useTravelPlan();
@@ -111,6 +130,13 @@ export default function AIChatScreen() {
     router.back();
   };
 
+  // 메시지 펼치기/접기 토글
+  const toggleMessageExpand = (messageId: string) => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId ? { ...msg, isExpanded: !msg.isExpanded } : msg
+    ));
+  };
+
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
 
@@ -193,24 +219,40 @@ export default function AIChatScreen() {
             contentContainerStyle={styles.messagesContent}
             showsVerticalScrollIndicator={false}
           >
-            {messages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageBubble,
-                  message.isUser ? styles.userBubble : styles.aiBubble
-                ]}
-              >
-                <ThemedText
+            {messages.map((message) => {
+              const showTruncated = !message.isUser && isLongText(message.text) && !message.isExpanded;
+              const displayText = showTruncated ? truncateText(message.text) : message.text;
+              
+              return (
+                <View
+                  key={message.id}
                   style={[
-                    styles.messageText,
-                    message.isUser ? styles.userText : styles.aiText
+                    styles.messageBubble,
+                    message.isUser ? styles.userBubble : styles.aiBubble
                   ]}
                 >
-                  {message.text}
-                </ThemedText>
-              </View>
-            ))}
+                  <ThemedText
+                    style={[
+                      styles.messageText,
+                      message.isUser ? styles.userText : styles.aiText
+                    ]}
+                  >
+                    {displayText}
+                  </ThemedText>
+                  {/* AI 메시지가 길 경우 전체보기/접기 버튼 */}
+                  {!message.isUser && isLongText(message.text) && (
+                    <TouchableOpacity 
+                      style={styles.expandButton}
+                      onPress={() => toggleMessageExpand(message.id)}
+                    >
+                      <ThemedText style={styles.expandButtonText}>
+                        {message.isExpanded ? '접기' : '전체보기'} {message.isExpanded ? '▲' : '▼'}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
             {isLoading && (
               <View style={[styles.messageBubble, styles.aiBubble, styles.loadingBubble]}>
                 <ActivityIndicator size="small" color="#FFFFFF" />
@@ -329,6 +371,18 @@ const styles = StyleSheet.create({
   },
   aiText: {
     color: '#FFFFFF',
+  },
+  expandButton: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+  },
+  expandButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
   inputContainer: {
     backgroundColor: '#FFFFFF',
