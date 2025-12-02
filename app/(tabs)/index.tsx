@@ -20,11 +20,11 @@ export default function HomeScreen() {
   };
 
   const handleDestinationPress = () => {
-    router.push('/home/destinations');
+    router.push('/destinations');
   };
 
   const handleAccommodationPress = () => {
-    router.push('/home/accommodation');
+    router.push('/accommodation');
   };
 
   const handlePlanTripPress = () => {

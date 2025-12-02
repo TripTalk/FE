@@ -16,12 +16,10 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="home" options={{ headerShown: false }} />
           <Stack.Screen name="ai-chat" options={{ headerShown: false }} />
-          <Stack.Screen name="repository" options={{ headerShown: false }} />
-          <Stack.Screen name="mypage" options={{ headerShown: false }} />
+          <Stack.Screen name="destinations" options={{ headerShown: true, title: '많이 찾는 여행지' }} />
+          <Stack.Screen name="accommodation" options={{ headerShown: true, title: '숙박·항공' }} />
           <Stack.Screen name="travel/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

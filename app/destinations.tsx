@@ -1,7 +1,7 @@
 import { DestinationListCard } from '@/components/home/DestinationListCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -62,10 +62,6 @@ export default function PopularDestinationsScreen() {
     router.push(`/travel/${id}`);
   };
 
-  const handleBackPress = () => {
-    router.back();
-  };
-
   const handleThemeSelect = (theme: keyof typeof themeIcons) => {
     setSelectedTheme(theme);
     setIsThemeSelectionExpanded(false); // 선택 후 접기
@@ -81,22 +77,11 @@ export default function PopularDestinationsScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen 
-        options={{
-          title: '많이 찾는 여행지',
-          headerLeft: () => (
-            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-              <ThemedText style={styles.backButtonText}>{'<'}</ThemedText>
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <ScrollView 
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
           {/* 여행 테마별 보기 */}
           <ThemedView style={styles.sectionContainer}>
             <TouchableOpacity 
@@ -152,9 +137,8 @@ export default function PopularDestinationsScreen() {
               />
             ))}
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -162,18 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-  },
-  backButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  backButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
   },
   scrollView: {
     flex: 1,

@@ -1,7 +1,7 @@
 import { AccommodationCard } from '@/components/home/AccommodationCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -102,10 +102,6 @@ export default function AccommodationScreen() {
     router.push(`/travel/${id}`);
   };
 
-  const handleBackPress = () => {
-    router.back();
-  };
-
   const renderAccommodationGrid = (items: any[]) => {
     const rows = [];
     for (let i = 0; i < items.length; i += 2) {
@@ -134,18 +130,7 @@ export default function AccommodationScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen 
-        options={{
-          title: '숙박·항공',
-          headerLeft: () => (
-            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-              <ThemedText style={styles.backButtonText}>{'<'}</ThemedText>
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
         {/* 탭 헤더 */}
         <View style={styles.tabContainer}>
           <View style={styles.tabWrapper}>
@@ -210,8 +195,7 @@ export default function AccommodationScreen() {
             </View>
           </ThemedView>
         </ScrollView>
-      </SafeAreaView>
-    </>
+    </SafeAreaView>
   );
 }
 
@@ -219,18 +203,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-  },
-  backButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  backButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
   },
   scrollView: {
     flex: 1,
