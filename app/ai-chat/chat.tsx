@@ -6,7 +6,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -54,6 +56,7 @@ export default function AIChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPlanCreated, setIsPlanCreated] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // 날짜 형식 변환 (YYYY-MM-DD -> YYYY.MM.DD)
@@ -127,7 +130,16 @@ export default function AIChatScreen() {
   }, [travelPlan]);
 
   const handleBackPress = () => {
+    setShowExitModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
     router.back();
+  };
+
+  const handleCancelExit = () => {
+    setShowExitModal(false);
   };
 
   // 메시지 펼치기/접기 토글
@@ -195,6 +207,16 @@ export default function AIChatScreen() {
           headerShown: true,
           title: 'AI 여행 플래너',
           headerBackTitle: '뒤로',
+          headerLeft: () => (
+            <TouchableOpacity onPress={handleBackPress} style={{ paddingHorizontal: 8 }}>
+              <ThemedText style={{ color: '#007AFF', fontSize: 17 }}>뒤로</ThemedText>
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={{ paddingHorizontal: 8 }}>
+              <ThemedText style={{ color: '#007AFF', fontSize: 17 }}>홈으로</ThemedText>
+            </TouchableOpacity>
+          ),
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -280,6 +302,37 @@ export default function AIChatScreen() {
             </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* 뒤로가기 확인 모달 */}
+      <Modal
+        visible={showExitModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelExit}
+      >
+        <Pressable style={styles.modalOverlay} onPress={handleCancelExit}>
+          <Pressable style={styles.exitModal} onPress={(e) => e.stopPropagation()}>
+            <ThemedText style={styles.exitModalTitle}>대화 종료</ThemedText>
+            <ThemedText style={styles.exitModalMessage}>
+              AI 대화 기록이 초기화됩니다.{"\n"}정말 나가시겠습니까?
+            </ThemedText>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity 
+                style={[styles.exitModalButton, styles.cancelButton]} 
+                onPress={handleCancelExit}
+              >
+                <ThemedText style={styles.cancelButtonText}>취소</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.exitModalButton, styles.confirmButton]} 
+                onPress={handleConfirmExit}
+              >
+                <ThemedText style={styles.confirmButtonText}>확인</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
     </>
   );
@@ -398,6 +451,61 @@ const styles = StyleSheet.create({
   },
   sendIcon: {
     fontSize: 18,
+    color: '#FFFFFF',
+  },
+  // 종료 확인 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exitModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    maxWidth: 320,
+    alignItems: 'center',
+  },
+  exitModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 12,
+  },
+  exitModalMessage: {
+    fontSize: 15,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  exitModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  exitModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F0F0F0',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  confirmButton: {
+    backgroundColor: '#4ECDC4',
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
 });
