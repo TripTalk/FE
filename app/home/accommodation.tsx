@@ -3,8 +3,19 @@ import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
 import { router, Stack } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeOut,
+  Layout,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const accommodationData = {
   항공: [
@@ -97,6 +108,24 @@ const accommodationData = {
 
 export default function AccommodationScreen() {
   const [activeTab, setActiveTab] = React.useState<'항공' | '숙박'>('항공');
+  
+  // 슬라이딩 인디케이터 애니메이션
+  const indicatorPosition = useSharedValue(0);
+  const TAB_WIDTH = (SCREEN_WIDTH - 32 - 8) / 2; // padding과 gap 고려
+
+  const handleTabChange = (tab: '항공' | '숙박') => {
+    setActiveTab(tab);
+    indicatorPosition.value = withTiming(tab === '항공' ? 0 : 1, {
+      duration: 250,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
+  };
+
+  const indicatorAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: indicatorPosition.value * TAB_WIDTH }],
+    };
+  });
 
   const handleItemPress = (id: string) => {
     router.push(`/travel/${id}`);
@@ -144,21 +173,26 @@ export default function AccommodationScreen() {
         {/* 탭 헤더 */}
         <View style={styles.tabContainer}>
           <View style={styles.tabWrapper}>
+            {/* 슬라이딩 인디케이터 */}
+            <Animated.View style={[styles.tabIndicator, indicatorAnimatedStyle]} />
+            
             <TouchableOpacity
-              style={[styles.tabButton, activeTab === '항공' && styles.activeTabButton]}
-              onPress={() => setActiveTab('항공')}
+              style={styles.tabButton}
+              onPress={() => handleTabChange('항공')}
+              activeOpacity={0.7}
             >
-              <ThemedText style={[styles.tabText, activeTab === '항공' && styles.activeTabText]}>
+              <Animated.Text style={[styles.tabText, activeTab === '항공' && styles.activeTabText]}>
                 항공
-              </ThemedText>
+              </Animated.Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tabButton, activeTab === '숙박' && styles.activeTabButton]}
-              onPress={() => setActiveTab('숙박')}
+              style={styles.tabButton}
+              onPress={() => handleTabChange('숙박')}
+              activeOpacity={0.7}
             >
-              <ThemedText style={[styles.tabText, activeTab === '숙박' && styles.activeTabText]}>
+              <Animated.Text style={[styles.tabText, activeTab === '숙박' && styles.activeTabText]}>
                 숙박
-              </ThemedText>
+              </Animated.Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -170,9 +204,15 @@ export default function AccommodationScreen() {
           {/* 선택된 탭의 내용 */}
           <View style={styles.contentContainer}>
             {accommodationData[activeTab] && (
-              <View style={styles.accommodationGrid}>
+              <Animated.View 
+                key={activeTab}
+                entering={FadeIn.duration(200)}
+                exiting={FadeOut.duration(100)}
+                layout={Layout.duration(200)}
+                style={styles.accommodationGrid}
+              >
                 {renderAccommodationGrid(accommodationData[activeTab])}
-              </View>
+              </Animated.View>
             )}
           </View>
 
@@ -229,17 +269,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 25,
     padding: 4,
+    position: 'relative',
   },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  activeTabButton: {
+  tabIndicator: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    width: '50%',
+    height: '100%',
     backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -248,6 +287,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    zIndex: 1,
   },
   tabText: {
     fontSize: 14,

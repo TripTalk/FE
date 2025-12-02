@@ -4,6 +4,13 @@ import { ThemedView } from '@/components/shared/themed-view';
 import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const themeIcons = {
@@ -57,6 +64,11 @@ const destinationData = [
 export default function PopularDestinationsScreen() {
   const [selectedTheme, setSelectedTheme] = React.useState<keyof typeof themeIcons | null>(null);
   const [isThemeSelectionExpanded, setIsThemeSelectionExpanded] = React.useState(false);
+  
+  // 애니메이션 값
+  const animationProgress = useSharedValue(0);
+  const COLLAPSED_HEIGHT = 0;
+  const EXPANDED_HEIGHT = 350; // 테마 그리드 높이 (7개 아이콘, 3열 x 3행)
 
   const handleTravelPress = (id: string) => {
     router.push(`/travel/${id}`);
@@ -64,8 +76,53 @@ export default function PopularDestinationsScreen() {
 
   const handleThemeSelect = (theme: keyof typeof themeIcons) => {
     setSelectedTheme(theme);
-    setIsThemeSelectionExpanded(false); // 선택 후 접기
+    // 선택 후 접기
+    setIsThemeSelectionExpanded(false);
+    animationProgress.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
   };
+
+  const toggleExpanded = () => {
+    const newExpanded = !isThemeSelectionExpanded;
+    setIsThemeSelectionExpanded(newExpanded);
+    animationProgress.value = withTiming(newExpanded ? 1 : 0, {
+      duration: 300,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
+  };
+
+  // 컨테이너 높이 애니메이션
+  const containerAnimatedStyle = useAnimatedStyle(() => {
+    const height = interpolate(
+      animationProgress.value,
+      [0, 1],
+      [COLLAPSED_HEIGHT, EXPANDED_HEIGHT]
+    );
+    const opacity = interpolate(
+      animationProgress.value,
+      [0, 0.3, 1],
+      [0, 0, 1]
+    );
+    return {
+      height,
+      opacity,
+      overflow: 'hidden' as const,
+    };
+  });
+
+  // 화살표 회전 애니메이션
+  const chevronAnimatedStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(
+      animationProgress.value,
+      [0, 1],
+      [0, 180]
+    );
+    return {
+      transform: [{ rotate: `${rotate}deg` }],
+    };
+  });
 
   const getFilteredDestinations = () => {
     if (!selectedTheme) {
@@ -86,21 +143,23 @@ export default function PopularDestinationsScreen() {
           <ThemedView style={styles.sectionContainer}>
             <TouchableOpacity 
               style={styles.sectionHeader}
-              onPress={() => setIsThemeSelectionExpanded(!isThemeSelectionExpanded)}
+              onPress={toggleExpanded}
+              activeOpacity={0.7}
             >
               <ThemedText style={styles.sectionTitle}>여행 테마별 보기</ThemedText>
-              <View style={styles.chevron}>
-                <ThemedText style={styles.chevronText}>
-                  {isThemeSelectionExpanded ? '⌄' : '⌃'}
-                </ThemedText>
-              </View>
+              <Animated.View style={[styles.chevron, chevronAnimatedStyle]}>
+                <ThemedText style={styles.chevronText}>⌃</ThemedText>
+              </Animated.View>
             </TouchableOpacity>
 
-            {isThemeSelectionExpanded && (
+            <Animated.View style={containerAnimatedStyle}>
               <View style={styles.themeGrid}>
                 <TouchableOpacity 
                   style={[styles.themeItem, selectedTheme === null && styles.selectedThemeItem]}
-                  onPress={() => setSelectedTheme(null)}
+                  onPress={() => {
+                    setSelectedTheme(null);
+                    toggleExpanded();
+                  }}
                 >
                   <View style={[styles.themeIcon, selectedTheme === null && styles.selectedThemeIcon]}>
                     <ThemedText style={styles.themeIconText}>🌍</ThemedText>
@@ -120,7 +179,7 @@ export default function PopularDestinationsScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
+            </Animated.View>
           </ThemedView>
 
           {/* 필터링된 여행지 목록 */}
@@ -160,7 +219,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -183,6 +241,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 16,
     justifyContent: 'space-between',
+    paddingTop: 16,
   },
   themeItem: {
     alignItems: 'center',
