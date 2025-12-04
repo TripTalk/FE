@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   question: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: '#333333',
     marginBottom: 8,
