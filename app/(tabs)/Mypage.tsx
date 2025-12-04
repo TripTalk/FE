@@ -71,7 +71,6 @@ export default function MyPageScreen() {
           <View style={styles.statsContainer}>
             <StatItem value="12" label="완료한 여행" color={COLORS.stat1} />
             <StatItem value="8" label="계획 중인 여행" color={COLORS.stat2} />
-            <StatItem value="156" label="여행 포인트" color={COLORS.stat3} />
           </View>
         </View>
 
