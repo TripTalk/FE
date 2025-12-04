@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
@@ -244,14 +245,19 @@ export default function AIChatScreen() {
                     message.isUser ? styles.userBubble : styles.aiBubble
                   ]}
                 >
-                  <ThemedText
-                    style={[
-                      styles.messageText,
-                      message.isUser ? styles.userText : styles.aiText
-                    ]}
-                  >
-                    {displayText}
-                  </ThemedText>
+                  {message.isUser ? (
+                    <ThemedText style={[styles.messageText, styles.userText]}>
+                      {displayText}
+                    </ThemedText>
+                  ) : showTruncated ? (
+                    <ThemedText style={[styles.messageText, styles.aiText]}>
+                      {displayText}
+                    </ThemedText>
+                  ) : (
+                    <Markdown style={markdownStyles}>
+                      {displayText}
+                    </Markdown>
+                  )}
                   {/* AI 메시지가 길 경우 전체보기/접기 버튼 */}
                   {!message.isUser && isLongText(message.text) && (
                     <TouchableOpacity 
@@ -507,5 +513,144 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+});
+
+// 마크다운 스타일
+const markdownStyles = StyleSheet.create({
+  body: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  heading1: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  heading2: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '700',
+    marginTop: 14,
+    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+    paddingBottom: 4,
+  },
+  heading3: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  paragraph: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  strong: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  em: {
+    color: '#FFFFFF',
+    fontStyle: 'italic',
+  },
+  bullet_list: {
+    marginLeft: 8,
+    marginBottom: 8,
+  },
+  ordered_list: {
+    marginLeft: 8,
+    marginBottom: 8,
+  },
+  list_item: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  bullet_list_icon: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginRight: 8,
+  },
+  ordered_list_icon: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginRight: 8,
+  },
+  code_inline: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  code_block: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    color: '#E0E0E0',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+    overflow: 'hidden',
+  },
+  fence: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    color: '#E0E0E0',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  blockquote: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderLeftWidth: 4,
+    borderLeftColor: 'rgba(255, 255, 255, 0.5)',
+    paddingLeft: 12,
+    paddingVertical: 8,
+    marginVertical: 8,
+    borderRadius: 4,
+  },
+  hr: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    height: 1,
+    marginVertical: 16,
+  },
+  link: {
+    color: '#A0E7E5',
+    textDecorationLine: 'underline',
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  thead: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  th: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  td: {
+    color: '#FFFFFF',
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
   },
 });

@@ -5,24 +5,29 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const destinations = ['제주도', '부산', '강릉', '도쿄', '오사카'];
-const popularDestinations = ['제주도', '부산', '강릉', '도쿄', '오사카'];
+const companions = ['본인', '친구', '연인', '가족', '아이', '부모님'];
 
 export default function PlanTripStep2Screen() {
   const { updateTravelPlan } = useTravelPlan();
-  const [whereInput, setWhereInput] = useState('');
-  const [destination, setDestination] = useState('');
+  const [selectedCompanions, setSelectedCompanions] = useState<string[]>([]);
+  const [directInput, setDirectInput] = useState('');
 
   const handleBackPress = () => {
     router.back();
   };
 
+  const toggleCompanion = (companion: string) => {
+    if (selectedCompanions.includes(companion)) {
+      setSelectedCompanions(selectedCompanions.filter(c => c !== companion));
+    } else {
+      setSelectedCompanions([...selectedCompanions, companion]);
+    }
+  };
+
   const handleNext = () => {
-    // Context에 출발지와 여행지 정보 저장
-    updateTravelPlan({ 
-      departure: whereInput,
-      destination: destination 
-    });
+    // Context에 동행자 정보 저장
+    const companionsText = directInput.trim() || selectedCompanions.join(', ');
+    updateTravelPlan({ companions: companionsText });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step3');
   };
@@ -53,64 +58,45 @@ export default function PlanTripStep2Screen() {
             </View>
           </View>
 
-          {/* 첫 번째 질문 */}
+          {/* 질문 */}
           <View style={styles.questionContainer}>
-            <ThemedText style={styles.question}>어디에서 출발하시나요?</ThemedText>
-            <ThemedText style={styles.questionSubtitle}>출발지를 입력해주세요</ThemedText>
+            <ThemedText style={styles.question}>누구와 함께 여행하시나요?</ThemedText>
+            <ThemedText style={styles.questionSubtitle}>여행 인원을 선택해주세요</ThemedText>
           </View>
 
-          {/* 출발지 입력 */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="예: 서울, 부산, 대구, 대전..."
-              placeholderTextColor="#999999"
-              value={whereInput}
-              onChangeText={setWhereInput}
-            />
-          </View>
-
-          {/* 두 번째 질문 */}
-          <View style={styles.questionContainer}>
-            <ThemedText style={styles.question}>어디로 여행을 가시나요?</ThemedText>
-            <ThemedText style={styles.questionSubtitle}>여행지나 혹은 도시나 지역을 입력해주세요</ThemedText>
-          </View>
-
-          {/* 목적지 입력 */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="예: 제주도, 부산, 파리, 도쿄..."
-              placeholderTextColor="#999999"
-              value={destination}
-              onChangeText={setDestination}
-            />
-          </View>
-
-          {/* 추천 여행지 */}
-          <View style={styles.recommendContainer}>
-            <ThemedText style={styles.recommendTitle}>추천 여행지</ThemedText>
-            <View style={styles.chipsContainer}>
-              {popularDestinations.map((place, index) => (
-                <TouchableOpacity
-                  key={index}
+          {/* 선택 옵션 */}
+          <View style={styles.optionsContainer}>
+            {companions.map((companion, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.optionButton,
+                  selectedCompanions.includes(companion) && styles.optionButtonSelected
+                ]}
+                onPress={() => toggleCompanion(companion)}
+              >
+                <ThemedText
                   style={[
-                    styles.chip,
-                    destination === place && styles.chipSelected
+                    styles.optionText,
+                    selectedCompanions.includes(companion) && styles.optionTextSelected
                   ]}
-                  onPress={() => setDestination(place)}
                 >
-                  <ThemedText
-                    style={[
-                      styles.chipText,
-                      destination === place && styles.chipTextSelected
-                    ]}
-                  >
-                    {place}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {companion}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* 직접 입력 */}
+          <View style={styles.inputContainer}>
+            <ThemedText style={styles.inputLabel}>직접 입력</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="예: 친구 3명, 가족 4명"
+              placeholderTextColor="#999999"
+              value={directInput}
+              onChangeText={setDirectInput}
+            />
           </View>
         </ScrollView>
 
@@ -119,10 +105,10 @@ export default function PlanTripStep2Screen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (whereInput.trim() && destination.trim()) && styles.nextButtonActive
+              (selectedCompanions.length > 0 || directInput.trim()) && styles.nextButtonActive
             ]}
             onPress={handleNext}
-            disabled={!whereInput.trim() || !destination.trim()}
+            disabled={selectedCompanions.length === 0 && !directInput.trim()}
           >
             <ThemedText style={styles.nextButtonText}>다음 단계</ThemedText>
           </TouchableOpacity>
@@ -178,8 +164,7 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     paddingHorizontal: 16,
-    marginBottom: 16,
-    marginTop: 8,
+    marginBottom: 32,
   },
   question: {
     fontSize: 20,
@@ -191,9 +176,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
+  optionsContainer: {
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 32,
+  },
+  optionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+  },
+  optionButtonSelected: {
+    borderColor: '#4ECDC4',
+    backgroundColor: '#E8F9F8',
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666666',
+  },
+  optionTextSelected: {
+    color: '#4ECDC4',
+    fontWeight: '600',
+  },
   inputContainer: {
     paddingHorizontal: 16,
-    marginBottom: 32,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 12,
   },
   input: {
     borderWidth: 1,
@@ -203,42 +221,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#333333',
-    backgroundColor: '#FAFAFA',
-  },
-  recommendContainer: {
-    paddingHorizontal: 16,
-  },
-  recommendTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-    marginBottom: 12,
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
-  },
-  chipSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#E8F4FF',
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666666',
-  },
-  chipTextSelected: {
-    color: '#007AFF',
-    fontWeight: '600',
   },
   bottomContainer: {
     padding: 16,
