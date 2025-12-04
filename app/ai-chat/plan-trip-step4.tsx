@@ -6,11 +6,11 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const travelStyles = [
-  { left: '체험·액티비티', right: 'SNS 핫플레이스' },
-  { left: '자연과 함께', right: '유명 관광지는 필수' },
-  { left: '여유롭게 힐링', right: '문화·예술·역사' },
-  { left: '여행지 느낌 물씬', right: '소핑은 열정적으로' },
-  { left: '관광보다 먹방', right: '' },
+  ['체험·액티비티', 'SNS 핫플레이스'],
+  ['자연과 함께', '유명 관광지는 필수'],
+  ['여유롭게 힐링', '문화·예술·역사'],
+  ['여행지 느낌 물씬', '쇼핑은 열정적으로'],
+  ['관광보다 먹방'],
 ];
 
 export default function PlanTripStep4Screen() {
@@ -23,7 +23,6 @@ export default function PlanTripStep4Screen() {
 
   const toggleStyle = (style: string) => {
     if (!style) return;
-    
     if (selectedStyles.includes(style)) {
       setSelectedStyles(selectedStyles.filter(s => s !== style));
     } else {
@@ -72,47 +71,32 @@ export default function PlanTripStep4Screen() {
 
           {/* 여행 스타일 선택 */}
           <View style={styles.stylesContainer}>
-            {travelStyles.map((row, index) => (
-              <View key={index} style={styles.styleRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.styleButton,
-                    styles.leftButton,
-                    selectedStyles.includes(row.left) && styles.styleButtonSelected
-                  ]}
-                  onPress={() => toggleStyle(row.left)}
-                >
-                  <ThemedText
-                    style={[
-                      styles.styleText,
-                      selectedStyles.includes(row.left) && styles.styleTextSelected
-                    ]}
-                  >
-                    {row.left}
-                  </ThemedText>
-                </TouchableOpacity>
-
-                {row.right ? (
-                  <TouchableOpacity
-                    style={[
-                      styles.styleButton,
-                      styles.rightButton,
-                      selectedStyles.includes(row.right) && styles.styleButtonSelected
-                    ]}
-                    onPress={() => toggleStyle(row.right)}
-                  >
-                    <ThemedText
+            {travelStyles.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.styleRow}>
+                {row.map((style, colIndex) => {
+                  const isSelected = selectedStyles.includes(style);
+                  return (
+                    <TouchableOpacity
+                      key={colIndex}
                       style={[
-                        styles.styleText,
-                        selectedStyles.includes(row.right) && styles.styleTextSelected
+                        styles.styleButton,
+                        isSelected && styles.styleButtonSelected
                       ]}
+                      onPress={() => toggleStyle(style)}
+                      activeOpacity={0.7}
                     >
-                      {row.right}
-                    </ThemedText>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.emptyButton} />
-                )}
+                      <ThemedText
+                        style={[
+                          styles.styleText,
+                          isSelected && styles.styleTextSelected
+                        ]}
+                      >
+                        {style}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  );
+                })}
+                {row.length === 1 && <View style={styles.emptySpace} />}
               </View>
             ))}
           </View>
@@ -196,44 +180,46 @@ const styles = StyleSheet.create({
   },
   stylesContainer: {
     paddingHorizontal: 16,
-    gap: 16,
+    gap: 12,
   },
   styleRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
   },
   styleButton: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    width: '47%',
     alignItems: 'center',
-  },
-  leftButton: {
-    // 왼쪽 버튼 스타일
-  },
-  rightButton: {
-    // 오른쪽 버튼 스타일
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#EEEEEE',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   styleButtonSelected: {
     borderColor: '#4ECDC4',
-    backgroundColor: '#E8F9F8',
+    backgroundColor: '#F0FFFE',
+    shadowColor: '#4ECDC4',
+    shadowOpacity: 0.2,
   },
   styleText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#666666',
+    color: '#555555',
     textAlign: 'center',
   },
   styleTextSelected: {
-    color: '#4ECDC4',
-    fontWeight: '600',
+    color: '#2DBDAD',
+    fontWeight: '700',
   },
-  emptyButton: {
-    flex: 1,
+  emptySpace: {
+    width: '47%',
   },
   bottomContainer: {
     padding: 16,

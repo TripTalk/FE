@@ -21,6 +21,8 @@ const MAPPING = {
   'folder.fill': 'folder',
   'person': 'person',
   'person.fill': 'person',
+  'person.crop.circle': 'account-circle',
+  'person.crop.circle.fill': 'account-circle',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.left': 'chevron-left',
   'chevron.right': 'chevron-right',

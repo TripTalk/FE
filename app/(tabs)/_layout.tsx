@@ -47,10 +47,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="mypage"
+        name="Mypage"
         options={{
           title: '마이페이지',
-          href: '/mypage',
+          href: '/Mypage',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol
               size={28}
