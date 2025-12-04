@@ -26,6 +26,7 @@ interface Message {
   isExpanded?: boolean;
   isSaveable?: boolean;
   isSaved?: boolean;
+  hasRepositoryLink?: boolean;
 }
 
 // 텍스트가 5줄을 초과하는지 확인하는 함수
@@ -179,6 +180,7 @@ export default function AIChatScreen() {
       text: '여행 계획이 저장되었습니다! 💾',
       isUser: false,
       timestamp: new Date(),
+      hasRepositoryLink: true,
     };
     setMessages(prev => [...prev, savedMessage]);
   };
@@ -318,6 +320,17 @@ export default function AIChatScreen() {
                     >
                       <ThemedText style={styles.saveButtonText}>
                         {message.isSaved ? '저장 완료 ✓' : '저장하기'}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+                  {/* 저장소로 바로가기 버튼 */}
+                  {!message.isUser && message.hasRepositoryLink && (
+                    <TouchableOpacity 
+                      style={styles.repositoryButton}
+                      onPress={() => router.push('/(tabs)/explore')}
+                    >
+                      <ThemedText style={styles.repositoryButtonText}>
+                        저장소로 바로가기 ›
                       </ThemedText>
                     </TouchableOpacity>
                   )}
@@ -514,6 +527,22 @@ const styles = StyleSheet.create({
     color: '#4ECDC4',
     fontSize: 15,
     fontWeight: '700',
+  },
+  repositoryButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+  },
+  repositoryButtonText: {
+    color: '#4ECDC4',
+    fontSize: 15,
+    fontWeight: '600',
   },
   inputContainer: {
     backgroundColor: '#FFFFFF',
