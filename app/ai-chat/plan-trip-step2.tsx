@@ -9,24 +9,25 @@ const companions = ['본인', '친구', '연인', '가족', '아이', '부모님
 
 export default function PlanTripStep2Screen() {
   const { updateTravelPlan } = useTravelPlan();
-  const [selectedCompanions, setSelectedCompanions] = useState<string[]>([]);
+  const [selectedCompanion, setSelectedCompanion] = useState<string | null>(null);
   const [directInput, setDirectInput] = useState('');
 
   const handleBackPress = () => {
     router.back();
   };
 
-  const toggleCompanion = (companion: string) => {
-    if (selectedCompanions.includes(companion)) {
-      setSelectedCompanions(selectedCompanions.filter(c => c !== companion));
+  const selectCompanion = (companion: string) => {
+    if (selectedCompanion === companion) {
+      setSelectedCompanion(null);
     } else {
-      setSelectedCompanions([...selectedCompanions, companion]);
+      setSelectedCompanion(companion);
+      setDirectInput(''); // 선택 시 직접 입력 초기화
     }
   };
 
   const handleNext = () => {
     // Context에 동행자 정보 저장
-    const companionsText = directInput.trim() || selectedCompanions.join(', ');
+    const companionsText = directInput.trim() || selectedCompanion || '';
     updateTravelPlan({ companions: companionsText });
     // 다음 단계로 이동
     router.push('/ai-chat/plan-trip-step3');
@@ -71,14 +72,14 @@ export default function PlanTripStep2Screen() {
                 key={index}
                 style={[
                   styles.optionButton,
-                  selectedCompanions.includes(companion) && styles.optionButtonSelected
+                  selectedCompanion === companion && styles.optionButtonSelected
                 ]}
-                onPress={() => toggleCompanion(companion)}
+                onPress={() => selectCompanion(companion)}
               >
                 <ThemedText
                   style={[
                     styles.optionText,
-                    selectedCompanions.includes(companion) && styles.optionTextSelected
+                    selectedCompanion === companion && styles.optionTextSelected
                   ]}
                 >
                   {companion}
@@ -105,10 +106,10 @@ export default function PlanTripStep2Screen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (selectedCompanions.length > 0 || directInput.trim()) && styles.nextButtonActive
+              (selectedCompanion || directInput.trim()) && styles.nextButtonActive
             ]}
             onPress={handleNext}
-            disabled={selectedCompanions.length === 0 && !directInput.trim()}
+            disabled={!selectedCompanion && !directInput.trim()}
           >
             <ThemedText style={styles.nextButtonText}>다음 단계</ThemedText>
           </TouchableOpacity>
