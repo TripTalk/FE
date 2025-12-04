@@ -58,6 +58,7 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlanCreated, setIsPlanCreated] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showHomeModal, setShowHomeModal] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // 날짜 형식 변환 (YYYY-MM-DD -> YYYY.MM.DD)
@@ -134,13 +135,26 @@ export default function AIChatScreen() {
     setShowExitModal(true);
   };
 
+  const handleHomePress = () => {
+    setShowHomeModal(true);
+  };
+
   const handleConfirmExit = () => {
     setShowExitModal(false);
     router.back();
   };
 
+  const handleConfirmHome = () => {
+    setShowHomeModal(false);
+    router.replace('/(tabs)');
+  };
+
   const handleCancelExit = () => {
     setShowExitModal(false);
+  };
+
+  const handleCancelHome = () => {
+    setShowHomeModal(false);
   };
 
   // 메시지 펼치기/접기 토글
@@ -208,14 +222,18 @@ export default function AIChatScreen() {
           headerShown: true,
           title: 'AI 여행 플래너',
           headerBackTitle: '뒤로',
+          headerTitleStyle: {
+            fontWeight: '600',
+            fontSize: 17,
+          },
           headerLeft: () => (
-            <TouchableOpacity onPress={handleBackPress} style={{ paddingHorizontal: 8 }}>
-              <ThemedText style={{ color: '#007AFF', fontSize: 17 }}>뒤로</ThemedText>
+            <TouchableOpacity onPress={handleBackPress} style={styles.headerButton}>
+              <ThemedText style={styles.headerButtonText}>‹ 뒤로</ThemedText>
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={{ paddingHorizontal: 8 }}>
-              <ThemedText style={{ color: '#007AFF', fontSize: 17 }}>홈으로</ThemedText>
+            <TouchableOpacity onPress={handleHomePress} style={styles.headerButton}>
+              <ThemedText style={styles.headerButtonText}>홈으로</ThemedText>
             </TouchableOpacity>
           ),
         }}
@@ -339,6 +357,37 @@ export default function AIChatScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* 홈으로 확인 모달 */}
+      <Modal
+        visible={showHomeModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelHome}
+      >
+        <Pressable style={styles.modalOverlay} onPress={handleCancelHome}>
+          <Pressable style={styles.exitModal} onPress={(e) => e.stopPropagation()}>
+            <ThemedText style={styles.exitModalTitle}>홈으로 이동</ThemedText>
+            <ThemedText style={styles.exitModalMessage}>
+              AI 대화 기록이 초기화됩니다.{"\n"}홈으로 이동하시겠습니까?
+            </ThemedText>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity 
+                style={[styles.exitModalButton, styles.cancelButton]} 
+                onPress={handleCancelHome}
+              >
+                <ThemedText style={styles.cancelButtonText}>취소</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.exitModalButton, styles.confirmButton]} 
+                onPress={handleConfirmHome}
+              >
+                <ThemedText style={styles.confirmButtonText}>확인</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
     </>
   );
@@ -348,6 +397,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  headerButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  headerButtonText: {
+    fontSize: 17,
+    color: '#4ECDC4',
+    fontWeight: '500',
   },
   keyboardView: {
     flex: 1,
