@@ -24,6 +24,8 @@ interface Message {
   isUser: boolean;
   timestamp: Date;
   isExpanded?: boolean;
+  isSaveable?: boolean;
+  isSaved?: boolean;
 }
 
 // 텍스트가 5줄을 초과하는지 확인하는 함수
@@ -104,6 +106,7 @@ export default function AIChatScreen() {
             text: planText,
             isUser: false,
             timestamp: new Date(),
+            isSaveable: true,
           },
           {
             id: '3',
@@ -162,6 +165,22 @@ export default function AIChatScreen() {
     setMessages(prev => prev.map(msg => 
       msg.id === messageId ? { ...msg, isExpanded: !msg.isExpanded } : msg
     ));
+  };
+
+  // 여행 계획 저장 핸들러
+  const handleSavePlan = (messageId: string) => {
+    // TODO: 실제 API 호출로 저장 기능 구현
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId ? { ...msg, isSaved: true } : msg
+    ));
+    // 저장 완료 메시지 추가
+    const savedMessage: Message = {
+      id: Date.now().toString(),
+      text: '여행 계획이 저장되었습니다! 💾',
+      isUser: false,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, savedMessage]);
   };
 
   const handleSend = async () => {
@@ -284,6 +303,21 @@ export default function AIChatScreen() {
                     >
                       <ThemedText style={styles.expandButtonText}>
                         {message.isExpanded ? '접기' : '전체보기'} {message.isExpanded ? '▲' : '▼'}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+                  {/* 저장 가능한 AI 응답에 저장하기 버튼 */}
+                  {!message.isUser && message.isSaveable && (
+                    <TouchableOpacity 
+                      style={[
+                        styles.saveButton,
+                        message.isSaved && styles.saveButtonSaved
+                      ]}
+                      onPress={() => handleSavePlan(message.id)}
+                      disabled={message.isSaved}
+                    >
+                      <ThemedText style={styles.saveButtonText}>
+                        {message.isSaved ? '저장 완료 ✓' : '저장하기'}
                       </ThemedText>
                     </TouchableOpacity>
                   )}
@@ -463,6 +497,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '600',
+  },
+  saveButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+  },
+  saveButtonSaved: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  saveButtonText: {
+    color: '#4ECDC4',
+    fontSize: 15,
+    fontWeight: '700',
   },
   inputContainer: {
     backgroundColor: '#FFFFFF',
