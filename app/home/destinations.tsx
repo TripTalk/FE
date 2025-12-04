@@ -13,14 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const themeIcons = {
-  지역: '🗺️',
-  바다: '🌊',
-  문화: '🎨',
-  식당: '🍽️',
-  힐링: '❤️',
-  역사: '🏛️',
-};
+const themeCategories = ['전체', '자연', '바다', '문화', '힐링', '역사'];
 
 const destinationData = [
   {
@@ -62,26 +55,20 @@ const destinationData = [
 ];
 
 export default function PopularDestinationsScreen() {
-  const [selectedTheme, setSelectedTheme] = React.useState<keyof typeof themeIcons | null>(null);
+  const [selectedTheme, setSelectedTheme] = React.useState<string>('전체');
   const [isThemeSelectionExpanded, setIsThemeSelectionExpanded] = React.useState(false);
   
   // 애니메이션 값
   const animationProgress = useSharedValue(0);
   const COLLAPSED_HEIGHT = 0;
-  const EXPANDED_HEIGHT = 350; // 테마 그리드 높이 (7개 아이콘, 3열 x 3행)
+  const EXPANDED_HEIGHT = 140; // 테마 그리드 높이 (3x2)
 
   const handleTravelPress = (id: string) => {
     router.push(`/travel/${id}`);
   };
 
-  const handleThemeSelect = (theme: keyof typeof themeIcons) => {
+  const handleThemeSelect = (theme: string) => {
     setSelectedTheme(theme);
-    // 선택 후 접기
-    setIsThemeSelectionExpanded(false);
-    animationProgress.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
-    });
   };
 
   const toggleExpanded = () => {
@@ -112,12 +99,12 @@ export default function PopularDestinationsScreen() {
     };
   });
 
-  // 화살표 회전 애니메이션
+  // 화살표 회전 애니메이션 (펼치면 위쪽, 접히면 아래쪽)
   const chevronAnimatedStyle = useAnimatedStyle(() => {
     const rotate = interpolate(
       animationProgress.value,
       [0, 1],
-      [0, 180]
+      [180, 0]
     );
     return {
       transform: [{ rotate: `${rotate}deg` }],
@@ -125,8 +112,8 @@ export default function PopularDestinationsScreen() {
   });
 
   const getFilteredDestinations = () => {
-    if (!selectedTheme) {
-      return destinationData; // 테마 선택 안 했을 때는 모든 목적지
+    if (selectedTheme === '전체') {
+      return destinationData; // 전체 선택 시 모든 목적지
     }
     return destinationData.filter(destination => 
       destination.themes.includes(selectedTheme)
@@ -154,30 +141,25 @@ export default function PopularDestinationsScreen() {
 
             <Animated.View style={containerAnimatedStyle}>
               <View style={styles.themeGrid}>
-                <TouchableOpacity 
-                  style={[styles.themeItem, selectedTheme === null && styles.selectedThemeItem]}
-                  onPress={() => {
-                    setSelectedTheme(null);
-                    toggleExpanded();
-                  }}
-                >
-                  <View style={[styles.themeIcon, selectedTheme === null && styles.selectedThemeIcon]}>
-                    <ThemedText style={styles.themeIconText}>🌍</ThemedText>
-                  </View>
-                  <ThemedText style={styles.themeText}>전체</ThemedText>
-                </TouchableOpacity>
-                {Object.entries(themeIcons).map(([theme, icon]) => (
-                  <TouchableOpacity 
-                    key={theme} 
-                    style={[styles.themeItem, selectedTheme === theme && styles.selectedThemeItem]}
-                    onPress={() => handleThemeSelect(theme as keyof typeof themeIcons)}
-                  >
-                    <View style={[styles.themeIcon, selectedTheme === theme && styles.selectedThemeIcon]}>
-                      <ThemedText style={styles.themeIconText}>{icon}</ThemedText>
-                    </View>
-                    <ThemedText style={styles.themeText}>{theme}</ThemedText>
-                  </TouchableOpacity>
-                ))}
+                {themeCategories.map((theme) => {
+                  const isSelected = selectedTheme === theme;
+                  return (
+                    <TouchableOpacity 
+                      key={theme} 
+                      style={[
+                        styles.themeButton,
+                        isSelected && styles.themeButtonSelected
+                      ]}
+                      onPress={() => handleThemeSelect(theme)}
+                      activeOpacity={0.7}
+                    >
+                      <ThemedText style={[
+                        styles.themeButtonText,
+                        isSelected && styles.themeButtonTextSelected
+                      ]}>{theme}</ThemedText>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </Animated.View>
           </ThemedView>
@@ -239,39 +221,33 @@ const styles = StyleSheet.create({
   themeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
-    justifyContent: 'space-between',
     paddingTop: 16,
+    gap: 10,
   },
-  themeItem: {
-    alignItems: 'center',
-    width: '30%',
-    marginBottom: 8,
-  },
-  themeIcon: {
-    width: 60,
-    height: 60,
-    backgroundColor: '#F0F7FF',
-    borderRadius: 30,
+  themeButton: {
+    width: '31%',
+    paddingVertical: 14,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#EEEEEE',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
-  themeIconText: {
-    fontSize: 24,
+  themeButtonSelected: {
+    backgroundColor: '#F0FFFE',
+    borderColor: '#4ECDC4',
   },
-  themeText: {
-    fontSize: 14,
-    color: '#333333',
-    textAlign: 'center',
+  themeButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#555555',
+  },
+  themeButtonTextSelected: {
+    color: '#2DBDAD',
+    fontWeight: '700',
   },
   destinationsContainer: {
     paddingHorizontal: 16,
-  },
-  selectedThemeItem: {
-    transform: [{ scale: 1.05 }],
-  },
-  selectedThemeIcon: {
-    backgroundColor: '#007AFF',
   },
 });
