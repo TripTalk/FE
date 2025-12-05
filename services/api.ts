@@ -4,7 +4,7 @@
 // iOS 시뮬레이터에서는 Mac의 실제 IP를 사용해야 함
 // 터미널에서 ipconfig getifaddr en0 으로 IP 확인
 // FastAPI: uvicorn AI_Chat:app --host 0.0.0.0 --port 8000 --reload
-const API_BASE_URL = 'http://223.194.139.114:8000';
+const API_BASE_URL = 'http://223.194.138.67:8000';
 
 // AI 응답은 시간이 걸리므로 타임아웃을 120초로 설정
 const TIMEOUT_MS = 120000;

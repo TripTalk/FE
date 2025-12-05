@@ -281,7 +281,8 @@ export default function AIChatScreen() {
                   key={message.id}
                   style={[
                     styles.messageBubble,
-                    message.isUser ? styles.userBubble : styles.aiBubble
+                    message.isUser ? styles.userBubble : styles.aiBubble,
+                    message.isSaveable && styles.saveableBubble
                   ]}
                 >
                   {message.isUser ? (
@@ -348,9 +349,6 @@ export default function AIChatScreen() {
           {/* 입력 영역 */}
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <TouchableOpacity style={styles.plusButton}>
-                <ThemedText style={styles.plusIcon}>+</ThemedText>
-              </TouchableOpacity>
               <TextInput
                 style={styles.input}
                 placeholder="어떤 계획이 더 필요하세요..."
@@ -470,6 +468,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
   },
+  saveableBubble: {
+    maxWidth: '85%',
+  },
   userBubble: {
     alignSelf: 'flex-end',
     backgroundColor: '#FFFFFF',
@@ -518,15 +519,20 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'stretch',
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
   },
   saveButtonSaved: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(78, 205, 196, 0.5)',
   },
   saveButtonText: {
     color: '#4ECDC4',
     fontSize: 15,
     fontWeight: '700',
+  },
+  saveButtonTextSaved: {
+    color: '#FFFFFF',
   },
   repositoryButton: {
     marginTop: 10,
@@ -556,22 +562,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     backgroundColor: '#F8F9FA',
     borderRadius: 24,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-  },
-  plusButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#4ECDC4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  plusIcon: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
   input: {
     flex: 1,
