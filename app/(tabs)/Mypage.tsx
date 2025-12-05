@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
 const COLORS = {
@@ -18,12 +18,12 @@ const COLORS = {
 };
 
 // 통계 아이템
-type StatItemProps = { value: string; label: string; color: string };
-const StatItem = ({ value, label, color }: StatItemProps) => (
-  <View style={styles.statItem}>
+type StatItemProps = { value: string; label: string; color: string; onPress?: () => void };
+const StatItem = ({ value, label, color, onPress }: StatItemProps) => (
+  <TouchableOpacity style={styles.statItem} onPress={onPress} activeOpacity={0.7}>
     <ThemedText style={[styles.statValue, { color }]}>{value}</ThemedText>
     <ThemedText style={styles.statLabel}>{label}</ThemedText>
-  </View>
+  </TouchableOpacity>
 );
 
 // 뱃지 아이템
@@ -69,34 +69,60 @@ export default function MyPageScreen() {
         <ThemedText style={styles.headerTitle}>마이페이지</ThemedText>
 
         <View style={styles.card}>
-          <View style={styles.profileHeader}>
+          <TouchableOpacity 
+            style={styles.profileHeader}
+            onPress={() => router.push('/mypage/edit-profile')}
+            activeOpacity={0.7}
+          >
             <View style={styles.profileImageContainer}>
-              <ThemedText style={styles.profileInitial}>김</ThemedText>
+              <Image 
+                source={require('@/assets/images/profile1.png')} 
+                style={styles.defaultProfileImage} 
+              />
             </View>
             <View style={styles.profileInfo}>
               <ThemedText style={styles.profileName}>김여행</ThemedText>
               <ThemedText style={styles.profileBio}>여행을 사랑하는 모험가</ThemedText>
             </View>
-            <TouchableOpacity>
-              <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
-            </TouchableOpacity>
-          </View>
+            <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
 
           <View style={styles.statsContainer}>
-            <StatItem value="12" label="완료한 여행" color={COLORS.stat1} />
-            <StatItem value="8" label="계획 중인 여행" color={COLORS.stat2} />
+            <StatItem 
+              value="12" 
+              label="완료한 여행" 
+              color={COLORS.stat1}
+              onPress={() => router.push('/(tabs)/explore?tab=completed')}
+            />
+            <StatItem 
+              value="8" 
+              label="계획 중인 여행" 
+              color={COLORS.stat2}
+              onPress={() => router.push('/(tabs)/explore?tab=planned')}
+            />
           </View>
         </View>
 
-        <View style={styles.card}>
-          <ThemedText style={styles.cardTitle}>🏆 나의 뱃지</ThemedText>
+        <TouchableOpacity 
+          style={styles.card} 
+          onPress={() => router.push('/mypage/badges')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.cardHeader}>
+            <ThemedText style={styles.cardTitle}>🏆 나의 뱃지</ThemedText>
+            <View style={styles.arrowIconContainer}>
+              <ThemedText style={styles.arrowIcon}>›</ThemedText>
+            </View>
+          </View>
           <View style={styles.badgeContainer}>
             <BadgeItem label="첫 여행" />
             <BadgeItem label="사진 마니아" />
             <BadgeItem label="탐험가" />
             <BadgeItem label="미획득" />
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.card}>
           <ThemedText style={styles.cardTitle}>계정 설정</ThemedText>
@@ -218,20 +244,59 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardTitle: { fontSize: 18, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 16 },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cardIconButton: {
+    padding: 4,
+  },
+  arrowIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrowIcon: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.textSecondary,
+  },
   profileHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
   profileImageContainer: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: COLORS.stat1,
+    backgroundColor: '#DDF9F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: 72,
+    height: 72,
+    resizeMode: 'cover',
+  },
+  defaultProfileImage: {
+    width: 72,
+    height: 72,
+    resizeMode: 'cover',
+    top: 11,
   },
   profileInitial: { fontSize: 24, fontWeight: 'bold', color: COLORS.white },
   profileInfo: { flex: 1 },
   profileName: { fontSize: 20, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 4 },
   profileBio: { fontSize: 14, color: COLORS.textSecondary },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E5E5',
+    marginVertical: 20,
+  },
   statsContainer: { flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { alignItems: 'center', flex: 1 },
   statValue: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },

@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -75,7 +75,16 @@ const sampleTravels: TravelData[] = [
 ];
 
 export default function ExploreScreen() {
+  const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState<'계획 완료' | '여행 완료'>('계획 완료');
+
+  useEffect(() => {
+    if (params.tab === 'completed') {
+      setActiveTab('여행 완료');
+    } else if (params.tab === 'planned') {
+      setActiveTab('계획 완료');
+    }
+  }, [params.tab]);
 
   const filteredTravels = sampleTravels.filter(travel => 
     activeTab === '계획 완료' ? travel.status === 'planned' : travel.status === 'completed'
