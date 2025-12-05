@@ -22,6 +22,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="home" options={{ headerShown: false }} />
           <Stack.Screen name="ai-chat" options={{ headerShown: false }} />
+          <Stack.Screen name="mypage" options={{ headerShown: false }} />
           <Stack.Screen name="travel/[id]" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />

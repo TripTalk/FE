@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/shared/themed-text';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
 const COLORS = {
@@ -37,9 +38,9 @@ const BadgeItem = ({ label }: BadgeItemProps) => (
 );
 
 // 메뉴 로우
-type MenuRowProps = { text: string; color?: string };
-const MenuRow = ({ text, color = COLORS.textPrimary }: MenuRowProps) => (
-  <TouchableOpacity style={styles.menuRow}>
+type MenuRowProps = { text: string; color?: string; onPress?: () => void };
+const MenuRow = ({ text, color = COLORS.textPrimary, onPress }: MenuRowProps) => (
+  <TouchableOpacity style={styles.menuRow} onPress={onPress}>
     <View style={styles.menuRowLeft}>
       <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
       <ThemedText style={[styles.menuRowText, { color }]}>{text}</ThemedText>
@@ -49,6 +50,19 @@ const MenuRow = ({ text, color = COLORS.textPrimary }: MenuRowProps) => (
 );
 
 export default function MyPageScreen() {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleLogout = () => {
+    setShowLogoutModal(false);
+    router.replace('/auth/login');
+  };
+
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(false);
+    router.replace('/auth/start');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -92,16 +106,91 @@ export default function MyPageScreen() {
 
         <View style={styles.card}>
           <ThemedText style={styles.cardTitle}>기타</ThemedText>
-          <MenuRow text="이용약관" />
-          <MenuRow text="개인정보처리방침" />
-          <MenuRow text="앱 정보" />
+          <MenuRow 
+            text="이용약관" 
+            onPress={() => router.push('/mypage/terms')}
+          />
+          <MenuRow 
+            text="개인정보처리방침" 
+            onPress={() => router.push('/mypage/privacy')}
+          />
+          <MenuRow 
+            text="앱 정보" 
+            onPress={() => router.push('/mypage/app-info')}
+          />
         </View>
 
         <View style={styles.card}>
-          <MenuRow text="로그아웃" color={COLORS.danger} />
-          <MenuRow text="회원탈퇴" color={COLORS.danger} />
+          <MenuRow 
+            text="로그아웃" 
+            color={COLORS.danger} 
+            onPress={() => setShowLogoutModal(true)}
+          />
+          <MenuRow 
+            text="회원탈퇴" 
+            color={COLORS.danger} 
+            onPress={() => setShowDeleteModal(true)}
+          />
         </View>
       </ScrollView>
+
+      {/* 로그아웃 확인 모달 */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLogoutModal(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <ThemedText style={styles.modalTitle}>로그아웃</ThemedText>
+            <ThemedText style={styles.modalMessage}>정말 로그아웃 하시겠습니까?</ThemedText>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <ThemedText style={styles.cancelButtonText}>취소</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.confirmButton]} 
+                onPress={handleLogout}
+              >
+                <ThemedText style={styles.confirmButtonText}>로그아웃</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 회원탈퇴 확인 모달 */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowDeleteModal(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <ThemedText style={styles.modalTitle}>회원탈퇴</ThemedText>
+            <ThemedText style={styles.modalMessage}>정말 탈퇴하시겠습니까?{"\n"}모든 데이터가 삭제됩니다.</ThemedText>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <ThemedText style={styles.cancelButtonText}>취소</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.dangerButton]} 
+                onPress={handleDeleteAccount}
+              >
+                <ThemedText style={styles.confirmButtonText}>탈퇴하기</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -163,4 +252,62 @@ const styles = StyleSheet.create({
   menuRowLeft: { flexDirection: 'row', alignItems: 'center' },
   menuRowText: { fontSize: 16, marginLeft: 12 },
   iconPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: COLORS.iconPlaceholder },
+  // 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    maxWidth: 320,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F0F0F0',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+  confirmButton: {
+    backgroundColor: '#4ECDC4',
+  },
+  dangerButton: {
+    backgroundColor: COLORS.danger,
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.white,
+  },
 });
