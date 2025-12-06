@@ -96,7 +96,12 @@ export default function PlanTripStep2Screen() {
               placeholder="예: 친구 3명, 가족 4명"
               placeholderTextColor="#999999"
               value={directInput}
-              onChangeText={setDirectInput}
+              onChangeText={(text) => {
+                setDirectInput(text);
+                if (text.trim()) {
+                  setSelectedCompanion(null); // 직접 입력 시 선택 옵션 초기화
+                }
+              }}
             />
           </View>
         </ScrollView>
