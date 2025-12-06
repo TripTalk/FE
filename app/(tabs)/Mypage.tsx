@@ -125,12 +125,6 @@ export default function MyPageScreen() {
         </TouchableOpacity>
 
         <View style={styles.card}>
-          <ThemedText style={styles.cardTitle}>계정 설정</ThemedText>
-          <MenuRow text="프로필 수정" />
-          <MenuRow text="비밀번호 변경" />
-        </View>
-
-        <View style={styles.card}>
           <ThemedText style={styles.cardTitle}>기타</ThemedText>
           <MenuRow 
             text="이용약관" 
