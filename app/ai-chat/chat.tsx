@@ -4,18 +4,17 @@ import { createTravelPlan, sendFeedback } from '@/services/api';
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import Markdown from 'react-native-markdown-display';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
@@ -29,20 +28,20 @@ interface Message {
   hasRepositoryLink?: boolean;
 }
 
-// 텍스트가 5줄을 초과하는지 확인하는 함수
+// 텍스트가 긴지 확인하는 함수
 const isLongText = (text: string): boolean => {
   const lines = text.split('\n');
-  return lines.length > 5 || text.length > 300;
+  return lines.length > 8 || text.length > 400;
 };
 
-// 텍스트를 5줄로 자르는 함수
+// 텍스트를 미리보기로 자르는 함수
 const truncateText = (text: string): string => {
   const lines = text.split('\n');
-  if (lines.length > 5) {
-    return lines.slice(0, 5).join('\n') + '...';
+  if (lines.length > 8) {
+    return lines.slice(0, 8).join('\n') + '\n...';
   }
-  if (text.length > 300) {
-    return text.slice(0, 300) + '...';
+  if (text.length > 400) {
+    return text.slice(0, 400) + '...';
   }
   return text;
 };
@@ -273,67 +272,84 @@ export default function AIChatScreen() {
             showsVerticalScrollIndicator={false}
           >
             {messages.map((message) => {
-              const showTruncated = !message.isUser && isLongText(message.text) && !message.isExpanded;
-              const displayText = showTruncated ? truncateText(message.text) : message.text;
+              // 전체보기 상태가 아니고 긴 텍스트일 때만 자름
+              const isExpanded = message.isExpanded === true;
+              
+              // 전체보기 상태면 무조건 전체 텍스트 표시
+              let displayText = message.text;
+              if (!message.isUser && !isExpanded && isLongText(message.text)) {
+                displayText = truncateText(message.text);
+              }
               
               return (
-                <View
-                  key={message.id}
+                <View 
+                  key={message.id} 
                   style={[
-                    styles.messageBubble,
-                    message.isUser ? styles.userBubble : styles.aiBubble,
-                    message.isSaveable && styles.saveableBubble
+                    styles.messageWrapper,
+                    message.isUser && styles.userMessageWrapper
                   ]}
                 >
-                  {message.isUser ? (
-                    <ThemedText style={[styles.messageText, styles.userText]}>
-                      {displayText}
-                    </ThemedText>
-                  ) : showTruncated ? (
-                    <ThemedText style={[styles.messageText, styles.aiText]}>
-                      {displayText}
-                    </ThemedText>
-                  ) : (
-                    <Markdown style={markdownStyles}>
-                      {displayText}
-                    </Markdown>
-                  )}
-                  {/* AI 메시지가 길 경우 전체보기/접기 버튼 */}
-                  {!message.isUser && isLongText(message.text) && (
-                    <TouchableOpacity 
-                      style={styles.expandButton}
-                      onPress={() => toggleMessageExpand(message.id)}
-                    >
-                      <ThemedText style={styles.expandButtonText}>
-                        {message.isExpanded ? '접기' : '전체보기'} {message.isExpanded ? '▲' : '▼'}
+                  {/* 메시지 버블 */}
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      message.isUser ? styles.userBubble : styles.aiBubble,
+                    ]}
+                  >
+                    {message.isUser ? (
+                      <ThemedText style={[styles.messageText, styles.userText]}>
+                        {message.text}
                       </ThemedText>
-                    </TouchableOpacity>
-                  )}
-                  {/* 저장 가능한 AI 응답에 저장하기 버튼 */}
-                  {!message.isUser && message.isSaveable && (
-                    <TouchableOpacity 
-                      style={[
-                        styles.saveButton,
-                        message.isSaved && styles.saveButtonSaved
-                      ]}
-                      onPress={() => handleSavePlan(message.id)}
-                      disabled={message.isSaved}
-                    >
-                      <ThemedText style={styles.saveButtonText}>
-                        {message.isSaved ? '저장 완료 ✓' : '저장하기'}
+                    ) : (
+                      <ThemedText style={[styles.messageText, styles.aiText]}>
+                        {displayText}
                       </ThemedText>
-                    </TouchableOpacity>
-                  )}
-                  {/* 저장소로 바로가기 버튼 */}
-                  {!message.isUser && message.hasRepositoryLink && (
-                    <TouchableOpacity 
-                      style={styles.repositoryButton}
-                      onPress={() => router.push('/(tabs)/explore')}
-                    >
-                      <ThemedText style={styles.repositoryButtonText}>
-                        저장소로 바로가기 ›
-                      </ThemedText>
-                    </TouchableOpacity>
+                    )}
+                  </View>
+                  
+                  {/* AI 메시지 버튼들 - 버블 밖에 배치 */}
+                  {!message.isUser && (
+                    <View style={styles.aiButtonsContainer}>
+                      {/* 전체보기/접기 버튼 */}
+                      {isLongText(message.text) && (
+                        <TouchableOpacity 
+                          style={styles.expandButton}
+                          onPress={() => toggleMessageExpand(message.id)}
+                        >
+                          <ThemedText style={styles.expandButtonText}>
+                            {isExpanded ? '접기 ▲' : '전체보기 ▼'}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      )}
+                      
+                      {/* 저장하기 버튼 - 전체보기 상태이거나 짧은 텍스트일 때만 표시 */}
+                      {message.isSaveable && (!isLongText(message.text) || isExpanded) && (
+                        <TouchableOpacity 
+                          style={[
+                            styles.saveButton,
+                            message.isSaved && styles.saveButtonSaved
+                          ]}
+                          onPress={() => handleSavePlan(message.id)}
+                          disabled={message.isSaved}
+                        >
+                          <ThemedText style={styles.saveButtonText}>
+                            {message.isSaved ? '저장 완료 ✓' : '저장하기'}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      )}
+                      
+                      {/* 저장소로 바로가기 버튼 */}
+                      {message.hasRepositoryLink && (
+                        <TouchableOpacity 
+                          style={styles.repositoryButton}
+                          onPress={() => router.push('/(tabs)/explore')}
+                        >
+                          <ThemedText style={styles.repositoryButtonText}>
+                            저장소로 바로가기 ›
+                          </ThemedText>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   )}
                 </View>
               );
@@ -460,16 +476,25 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     padding: 16,
-    gap: 12,
+    paddingBottom: 100,
+    gap: 16,
+  },
+  messageWrapper: {
+    maxWidth: '95%',
+    alignSelf: 'flex-start',
+  },
+  userMessageWrapper: {
+    alignSelf: 'flex-end',
+    maxWidth: '80%',
   },
   messageBubble: {
-    maxWidth: '80%',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 18,
   },
-  saveableBubble: {
-    maxWidth: '85%',
+  aiButtonsContainer: {
+    marginTop: 8,
+    gap: 8,
   },
   userBubble: {
     alignSelf: 'flex-end',
@@ -478,8 +503,19 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   aiBubble: {
-    alignSelf: 'flex-start',
     backgroundColor: '#4ECDC4',
+  },
+  expandButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#3DBDB5',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  expandButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   loadingBubble: {
     flexDirection: 'row',
@@ -492,25 +528,14 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 15,
-    lineHeight: 20,
+    lineHeight: 24,
   },
   userText: {
     color: '#333333',
   },
   aiText: {
     color: '#FFFFFF',
-  },
-  expandButton: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.3)',
-    alignItems: 'center',
-  },
-  expandButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
+    lineHeight: 24,
   },
   saveButton: {
     marginTop: 12,

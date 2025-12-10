@@ -276,6 +276,9 @@ export interface FeedbackResponse {
  * POST /Travel-Plan
  */
 export const createTravelPlan = async (data: TravelPlanRequest): Promise<TravelPlanResponse> => {
+  console.log('=== Travel-Plan API 요청 데이터 ===');
+  console.log(JSON.stringify(data, null, 2));
+  
   const response = await fetchWithTimeout(`${AI_API_BASE_URL}/Travel-Plan`, {
     method: 'POST',
     headers: {
@@ -285,7 +288,11 @@ export const createTravelPlan = async (data: TravelPlanRequest): Promise<TravelP
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    console.error('=== Travel-Plan API 오류 ===');
+    console.error('Status:', response.status);
+    console.error('Error:', JSON.stringify(errorData, null, 2));
+    throw new Error(`HTTP error! status: ${response.status}, detail: ${JSON.stringify(errorData)}`);
   }
 
   return await response.json();
@@ -311,4 +318,102 @@ export const sendFeedback = async (message: string): Promise<any> => {
   const data = await response.json();
   console.log('Raw API response:', data);
   return data;
+};
+
+/**
+ * 특정 여행 요약 정보 조회 API
+ * GET /travel-summary/{travel_id}
+ * 특정 여행의 요약 정보를 조회합니다.
+ */
+export const getTravelSummary = async (travelId: string): Promise<string> => {
+  const response = await fetchWithTimeout(
+    `${AI_API_BASE_URL}/travel-summary/${encodeURIComponent(travelId)}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    if (response.status === 422) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.[0]?.msg || 'Validation Error');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// =====================
+// 🗺️ 여행지 관련 API
+// =====================
+
+// 테마 필터 타입
+export type TripPlaceTheme = 'NATURE' | 'SEA' | 'CULTURE' | 'HEALING' | 'HISTORY';
+
+// 여행지 정보 타입
+export interface TripPlace {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string;
+  theme: TripPlaceTheme;
+  address?: string;
+  rating?: number;
+}
+
+// 여행지 목록 응답 타입
+export interface TripPlaceListResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    places: TripPlace[];
+    nextCursorId: number | null;
+    hasNext: boolean;
+  };
+}
+
+/**
+ * 여행지 목록 조회 API
+ * GET /api/trip-place
+ * 테마별로 여행지를 커서 기반 무한스크롤로 조회합니다.
+ * theme을 비우면 전체 조회됩니다.
+ */
+export const getTripPlaces = async (
+  theme?: TripPlaceTheme,
+  cursorId?: number | null
+): Promise<TripPlaceListResponse> => {
+  const params = new URLSearchParams();
+  if (theme) {
+    params.append('theme', theme);
+  }
+  if (cursorId !== undefined && cursorId !== null) {
+    params.append('cursorId', cursorId.toString());
+  }
+  
+  const queryString = params.toString();
+  const url = `${AUTH_API_BASE_URL}/api/trip-place${queryString ? `?${queryString}` : ''}`;
+  
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
 };
