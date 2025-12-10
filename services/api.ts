@@ -358,12 +358,11 @@ export type TripPlaceTheme = 'NATURE' | 'SEA' | 'CULTURE' | 'HEALING' | 'HISTORY
 // 여행지 정보 타입
 export interface TripPlace {
   id: number;
-  name: string;
+  region: string;
   description: string;
-  imageUrl: string;
-  theme: TripPlaceTheme;
-  address?: string;
-  rating?: number;
+  viewCount: number;
+  imgUrl: string;
+  themes: TripPlaceTheme[];
 }
 
 // 여행지 목록 응답 타입
@@ -372,9 +371,11 @@ export interface TripPlaceListResponse {
   code: string;
   message: string;
   result: {
-    places: TripPlace[];
-    nextCursorId: number | null;
+    tripPlaceList: TripPlace[];
+    tripPlaceListSize: number;
+    isFirst: boolean;
     hasNext: boolean;
+    nextCursorId: number | null;
   };
 }
 

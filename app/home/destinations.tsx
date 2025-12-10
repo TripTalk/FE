@@ -1,69 +1,81 @@
 import { DestinationListCard } from '@/components/home/DestinationListCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
+import { getTripPlaces, TripPlace, TripPlaceTheme } from '@/services/api';
 import { router } from 'expo-router';
-import React from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
+    Easing,
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// 테마 한글 ↔ 영문 매핑
 const themeCategories = ['전체', '자연', '바다', '문화', '힐링', '역사'];
+const themeToApiMap: Record<string, TripPlaceTheme | undefined> = {
+  '전체': undefined,
+  '자연': 'NATURE',
+  '바다': 'SEA',
+  '문화': 'CULTURE',
+  '힐링': 'HEALING',
+  '역사': 'HISTORY',
+};
 
-const destinationData = [
-  {
-    id: 'jeju',
-    title: '제주도',
-    subtitle: '한라산과 에메랄드빛 바다가 아름다운 힐링 여행지',
-    viewCount: '12,543회',
-    tags: ['#자연', '#바다', '#드라이브'],
-    imageUrl: 'https://picsum.photos/400/200?random=1',
-    themes: ['지역', '바다', '힐링']
-  },
-  {
-    id: 'busan',
-    title: '부산',
-    subtitle: '해운대 해변과 감천문화마을의 매력적인 항구도시',
-    viewCount: '9,821회',
-    tags: ['#해변', '#항구', '#수족관'],
-    imageUrl: 'https://picsum.photos/400/200?random=2',
-    themes: ['지역', '바다', '문화']
-  },
-  {
-    id: 'gyeongju',
-    title: '경주',
-    subtitle: '천년 고도의 역사가 문화가 살아 숨쉬는 곳',
-    viewCount: '7,234회',
-    tags: ['#역사', '#문화', '#유적지'],
-    imageUrl: 'https://picsum.photos/400/200?random=3',
-    themes: ['지역', '문화', '역사']
-  },
-  {
-    id: 'gangneung',
-    title: '강릉',
-    subtitle: '동해의 푸른 바다와 커피의 도시',
-    viewCount: '6,892회',
-    tags: ['#바다', '#커피', '#일출'],
-    imageUrl: 'https://picsum.photos/400/200?random=4',
-    themes: ['지역', '바다', '힐링']
-  }
-];
+const themeToKorean: Record<string, string> = {
+  'NATURE': '자연',
+  'SEA': '바다',
+  'CULTURE': '문화',
+  'HEALING': '힐링',
+  'HISTORY': '역사',
+};
 
 export default function PopularDestinationsScreen() {
-  const [selectedTheme, setSelectedTheme] = React.useState<string>('전체');
-  const [isThemeSelectionExpanded, setIsThemeSelectionExpanded] = React.useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<string>('전체');
+  const [isThemeSelectionExpanded, setIsThemeSelectionExpanded] = useState(false);
+  const [destinations, setDestinations] = useState<TripPlace[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [nextCursorId, setNextCursorId] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
   
   // 애니메이션 값
   const animationProgress = useSharedValue(0);
   const COLLAPSED_HEIGHT = 0;
-  const EXPANDED_HEIGHT = 140; // 테마 그리드 높이 (3x2)
+  const EXPANDED_HEIGHT = 140;
 
-  const handleTravelPress = (id: string) => {
+  // API에서 여행지 데이터 가져오기
+  const fetchDestinations = async (theme?: TripPlaceTheme, cursor?: number | null) => {
+    setIsLoading(true);
+    try {
+      const response = await getTripPlaces(theme, cursor);
+      if (response.isSuccess && response.result) {
+        if (cursor) {
+          // 다음 페이지 로드 시 기존 데이터에 추가
+          setDestinations(prev => [...prev, ...response.result.tripPlaceList]);
+        } else {
+          // 첫 페이지 로드 시 데이터 교체
+          setDestinations(response.result.tripPlaceList);
+        }
+        setNextCursorId(response.result.nextCursorId);
+        setHasNext(response.result.hasNext);
+      }
+    } catch (error) {
+      console.error('여행지 로드 실패:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 테마 변경 시 데이터 다시 로드
+  useEffect(() => {
+    const apiTheme = themeToApiMap[selectedTheme];
+    fetchDestinations(apiTheme, null);
+  }, [selectedTheme]);
+
+  const handleTravelPress = (id: number) => {
     router.push(`/travel/${id}`);
   };
 
@@ -111,13 +123,12 @@ export default function PopularDestinationsScreen() {
     };
   });
 
-  const getFilteredDestinations = () => {
-    if (selectedTheme === '전체') {
-      return destinationData; // 전체 선택 시 모든 목적지
+  // 더 보기 (무한스크롤)
+  const loadMore = () => {
+    if (hasNext && !isLoading && nextCursorId) {
+      const apiTheme = themeToApiMap[selectedTheme];
+      fetchDestinations(apiTheme, nextCursorId);
     }
-    return destinationData.filter(destination => 
-      destination.themes.includes(selectedTheme)
-    );
   };
 
   return (
@@ -166,17 +177,43 @@ export default function PopularDestinationsScreen() {
 
           {/* 필터링된 여행지 목록 */}
           <View style={styles.destinationsContainer}>
-            {getFilteredDestinations().map((destination) => (
-              <DestinationListCard
-                key={destination.id}
-                title={destination.title}
-                subtitle={destination.subtitle}
-                viewCount={destination.viewCount}
-                tags={destination.tags}
-                imageUrl={destination.imageUrl}
-                onPress={() => handleTravelPress(destination.id)}
-              />
-            ))}
+            {isLoading && destinations.length === 0 ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4ECDC4" />
+                <ThemedText style={styles.loadingText}>여행지를 불러오는 중...</ThemedText>
+              </View>
+            ) : destinations.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <ThemedText style={styles.emptyText}>등록된 여행지가 없습니다.</ThemedText>
+              </View>
+            ) : (
+              <>
+                {destinations.map((destination) => (
+                  <DestinationListCard
+                    key={destination.id}
+                    title={destination.region}
+                    subtitle={destination.description}
+                    viewCount={`${destination.viewCount.toLocaleString()}회`}
+                    tags={destination.themes.map(t => `#${themeToKorean[t] || t}`)}
+                    imageUrl={destination.imgUrl}
+                    onPress={() => handleTravelPress(destination.id)}
+                  />
+                ))}
+                {hasNext && (
+                  <TouchableOpacity 
+                    style={styles.loadMoreButton} 
+                    onPress={loadMore}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#4ECDC4" />
+                    ) : (
+                      <ThemedText style={styles.loadMoreText}>더 보기</ThemedText>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
           </View>
         </ScrollView>
     </SafeAreaView>
@@ -249,5 +286,39 @@ const styles = StyleSheet.create({
   },
   destinationsContainer: {
     paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  loadingContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666666',
+  },
+  emptyContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 15,
+    color: '#999999',
+  },
+  loadMoreButton: {
+    marginTop: 16,
+    paddingVertical: 14,
+    backgroundColor: '#F0FFFE',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+    alignItems: 'center',
+  },
+  loadMoreText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#4ECDC4',
   },
 });
