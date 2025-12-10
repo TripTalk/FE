@@ -1,7 +1,9 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useAuth } from '@/contexts/AuthContext';
+import { logout } from '@/services/api';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
 const COLORS = {
@@ -50,12 +52,36 @@ const MenuRow = ({ text, color = COLORS.textPrimary, onPress }: MenuRowProps) =>
 );
 
 export default function MyPageScreen() {
+  const { tokens, clearTokens } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    setShowLogoutModal(false);
-    router.replace('/auth/login');
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    
+    setIsLoggingOut(true);
+    try {
+      // 로그아웃 API 호출
+      if (tokens?.accessToken) {
+        console.log('로그아웃 API 호출 중...');
+        const response = await logout(tokens.accessToken);
+        console.log('로그아웃 성공:', response);
+      }
+      // 토큰 삭제
+      await clearTokens();
+      setShowLogoutModal(false);
+      // 로그인 화면으로 이동
+      router.replace('/auth/login');
+    } catch (error: any) {
+      console.error('로그아웃 오류:', error);
+      // API 실패해도 로컬 토큰은 삭제하고 로그인 화면으로 이동
+      await clearTokens();
+      setShowLogoutModal(false);
+      router.replace('/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -159,9 +185,9 @@ export default function MyPageScreen() {
         visible={showLogoutModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowLogoutModal(false)}
+        onRequestClose={() => !isLoggingOut && setShowLogoutModal(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowLogoutModal(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => !isLoggingOut && setShowLogoutModal(false)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <ThemedText style={styles.modalTitle}>로그아웃</ThemedText>
             <ThemedText style={styles.modalMessage}>정말 로그아웃 하시겠습니까?</ThemedText>
@@ -169,14 +195,20 @@ export default function MyPageScreen() {
               <TouchableOpacity 
                 style={[styles.modalButton, styles.cancelButton]} 
                 onPress={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
               >
                 <ThemedText style={styles.cancelButtonText}>취소</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.modalButton, styles.confirmButton]} 
                 onPress={handleLogout}
+                disabled={isLoggingOut}
               >
-                <ThemedText style={styles.confirmButtonText}>로그아웃</ThemedText>
+                {isLoggingOut ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <ThemedText style={styles.confirmButtonText}>로그아웃</ThemedText>
+                )}
               </TouchableOpacity>
             </View>
           </Pressable>

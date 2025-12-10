@@ -4,7 +4,7 @@
 // 인증 API 서버 (Spring Boot)
 const AUTH_API_BASE_URL = 'http://52.78.55.147:8080';
 // AI 여행 플래너 API 서버 (FastAPI)
-const AI_API_BASE_URL = 'http://223.194.138.67:8000';
+const AI_API_BASE_URL = 'http://52.78.55.147:8000';
 
 // AI 응답은 시간이 걸리므로 타임아웃을 120초로 설정
 const TIMEOUT_MS = 120000;
@@ -143,6 +143,80 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// 로그아웃 응답 타입
+export interface LogoutResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+}
+
+/**
+ * 로그아웃 API
+ * POST /api/auth/logout
+ */
+export const logout = async (accessToken: string): Promise<LogoutResponse> => {
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/auth/logout`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// 토큰 재발급 요청 타입
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+// 토큰 재발급 응답 타입
+export interface RefreshTokenResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+/**
+ * 토큰 재발급 API
+ * POST /api/auth/refresh
+ * Refresh Token으로 Access Token을 재발급받습니다.
+ */
+export const refreshToken = async (refreshTokenValue: string): Promise<RefreshTokenResponse> => {
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/auth/refresh`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken: refreshTokenValue }),
     },
     DEFAULT_TIMEOUT_MS
   );
