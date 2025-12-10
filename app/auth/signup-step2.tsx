@@ -1,3 +1,4 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -7,6 +8,7 @@ const { height } = Dimensions.get('window');
 
 export default function SignupStep2Screen() {
   const router = useRouter();
+  const { updateSignupData } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -14,6 +16,7 @@ export default function SignupStep2Screen() {
 
   const handleNext = () => {
     if (isPasswordValid) {
+      updateSignupData({ password });
       router.push('/auth/signup-step3' as any);
     }
   };

@@ -1,3 +1,4 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -7,12 +8,21 @@ const { height } = Dimensions.get('window');
 
 export default function SignupStep1Screen() {
   const router = useRouter();
+  const { updateSignupData } = useAuth();
   const [email, setEmail] = useState('');
 
+  // 이메일 유효성 검사
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isEmailValid = isValidEmail(email);
+
   const handleNext = () => {
-    if (email.trim()) {
-      router.push('/auth/signup-step2' as any);
-    }
+    if (!isEmailValid) return;
+    updateSignupData({ email: email.trim() });
+    router.push('/auth/signup-step2' as any);
   };
 
   const handleBack = () => {
@@ -41,21 +51,28 @@ export default function SignupStep1Screen() {
           placeholder="abc123456@XXXXX.com"
           placeholderTextColor="#CCCCCC"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+          }}
           keyboardType="email-address"
           autoCapitalize="none"
         />
 
         {/* Divider line */}
-        <View style={styles.divider} />
+        <View style={[styles.divider, email.length > 0 && !isEmailValid && styles.dividerError]} />
+        
+        {/* 이메일 유효성 메시지 */}
+        {email.length > 0 && !isEmailValid && (
+          <Text style={styles.errorText}>올바른 이메일 형식을 입력해주세요.</Text>
+        )}
       </View>
 
       {/* Footer Button */}
       <View style={styles.footer}>
         <Pressable
-          style={[styles.nextButton, !email.trim() && styles.buttonDisabled]}
+          style={[styles.nextButton, !isEmailValid && styles.buttonDisabled]}
           onPress={handleNext}
-          disabled={!email.trim()}
+          disabled={!isEmailValid}
         >
           <Text style={styles.nextButtonText}>다음</Text>
         </Pressable>
@@ -116,6 +133,14 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#1DCBB4',
+    marginTop: 8,
+  },
+  dividerError: {
+    backgroundColor: '#FF6B6B',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#FF6B6B',
     marginTop: 8,
   },
   footer: {

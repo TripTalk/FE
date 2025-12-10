@@ -1,18 +1,21 @@
 // FastAPI 백엔드 연동 서비스
 
 // 🔹 API 서버 주소 설정
-// iOS 시뮬레이터에서는 Mac의 실제 IP를 사용해야 함
-// 터미널에서 ipconfig getifaddr en0 으로 IP 확인
-// FastAPI: uvicorn AI_Chat:app --host 0.0.0.0 --port 8000 --reload
-const API_BASE_URL = 'http://223.194.138.67:8000';
+// 인증 API 서버 (Spring Boot)
+const AUTH_API_BASE_URL = 'http://52.78.55.147:8080';
+// AI 여행 플래너 API 서버 (FastAPI)
+const AI_API_BASE_URL = 'http://223.194.138.67:8000';
 
 // AI 응답은 시간이 걸리므로 타임아웃을 120초로 설정
 const TIMEOUT_MS = 120000;
 
+// 일반 API 타임아웃 (30초)
+const DEFAULT_TIMEOUT_MS = 30000;
+
 // 타임아웃이 있는 fetch 함수
-const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
+const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number = TIMEOUT_MS): Promise<Response> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
   
   try {
     const response = await fetch(url, {
@@ -29,6 +32,132 @@ const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Resp
     throw error;
   }
 };
+
+// =====================
+// 🔐 인증 관련 API
+// =====================
+
+// 회원가입 요청 타입
+export interface SignupRequest {
+  email: string;
+  password: string;
+  nickName: string;
+}
+
+// 회원가입 응답 타입
+export interface SignupResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    email: string;
+    password: string;
+    nickName: string;
+  };
+}
+
+// 이메일 중복 확인 응답 타입
+export interface CheckEmailResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: boolean; // true: 사용 가능, false: 중복
+}
+
+/**
+ * 이메일 중복 확인 API
+ * GET /api/auth/check-email?email=xxx
+ */
+export const checkEmailExists = async (email: string): Promise<CheckEmailResponse> => {
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/auth/check-email?email=${encodeURIComponent(email)}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  return await response.json();
+};
+
+/**
+ * 회원가입 API
+ * POST /api/auth/signup
+ */
+export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/auth/signup`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  const responseData = await response.json();
+  
+  // 에러 응답이더라도 JSON 형태로 반환
+  if (!response.ok || !responseData.isSuccess) {
+    const error = new Error(responseData.message || `HTTP error! status: ${response.status}`) as any;
+    error.code = responseData.code;
+    error.response = responseData;
+    throw error;
+  }
+
+  return responseData;
+};
+
+// 로그인 요청 타입
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+// 로그인 응답 타입
+export interface LoginResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+/**
+ * 로그인 API
+ * POST /api/auth/login
+ */
+export const login = async (data: LoginRequest): Promise<LoginResponse> => {
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/auth/login`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// =====================
+// 🗺️ 여행 계획 관련 API
+// =====================
 
 // 여행 계획 요청 타입
 export interface TravelPlanRequest {
@@ -73,7 +202,7 @@ export interface FeedbackResponse {
  * POST /Travel-Plan
  */
 export const createTravelPlan = async (data: TravelPlanRequest): Promise<TravelPlanResponse> => {
-  const response = await fetchWithTimeout(`${API_BASE_URL}/Travel-Plan`, {
+  const response = await fetchWithTimeout(`${AI_API_BASE_URL}/Travel-Plan`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -93,7 +222,7 @@ export const createTravelPlan = async (data: TravelPlanRequest): Promise<TravelP
  * POST /feedback
  */
 export const sendFeedback = async (message: string): Promise<any> => {
-  const response = await fetchWithTimeout(`${API_BASE_URL}/feedback`, {
+  const response = await fetchWithTimeout(`${AI_API_BASE_URL}/feedback`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,14 +1,18 @@
+import { useAuth } from '@/contexts/AuthContext';
+import { signup } from '@/services/api';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
 
 export default function SignupStep4Screen() {
   const router = useRouter();
+  const { signupData, updateSignupData, resetSignupData } = useAuth();
   const [nickname, setNickname] = useState('');
   const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [slideAnim] = useState(new Animated.Value(0));
   const [agreements, setAgreements] = useState({
     all: false,
@@ -58,10 +62,54 @@ export default function SignupStep4Screen() {
 
   const allRequiredChecked = agreements.age && agreements.terms && agreements.privacy;
 
-  const handleAgreementConfirm = () => {
-    if (allRequiredChecked) {
-      setShowAgreementModal(false);
-      router.push('/(tabs)' as any);
+  const handleAgreementConfirm = async () => {
+    if (!allRequiredChecked || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      // 회원가입 API 호출
+      const response = await signup({
+        email: signupData.email,
+        password: signupData.password,
+        nickName: nickname,
+      });
+
+      console.log('회원가입 성공:', response);
+
+      if (response.isSuccess) {
+        // 회원가입 데이터 초기화
+        resetSignupData();
+        setShowAgreementModal(false);
+        // 회원가입 성공 알림 후 로그인 화면으로 이동
+        Alert.alert(
+          '회원가입 완료',
+          '회원가입이 완료되었습니다.\n로그인해주세요.',
+          [
+            {
+              text: '확인',
+              onPress: () => router.replace('/auth/login' as any),
+            },
+          ]
+        );
+      } else {
+        Alert.alert('회원가입 실패', response.message || '다시 시도해주세요.');
+      }
+    } catch (error: any) {
+      console.error('회원가입 오류:', error);
+      
+      // 에러 메시지 기반으로 중복 체크
+      const errorMessage = error.message || '';
+      const errorCode = error.code || '';
+      
+      if (errorMessage.includes('이메일') || errorCode.includes('EMAIL')) {
+        Alert.alert('회원가입 실패', '이미 사용 중인 이메일입니다.\n다른 이메일을 입력해주세요.');
+      } else if (errorMessage.includes('닉네임') || errorCode.includes('NICKNAME')) {
+        Alert.alert('회원가입 실패', '이미 사용 중인 닉네임입니다.\n다른 닉네임을 입력해주세요.');
+      } else {
+        Alert.alert('오류', errorMessage || '서버 연결에 실패했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -181,11 +229,15 @@ export default function SignupStep4Screen() {
             {/* Confirm Button */}
             <View style={styles.modalFooter}>
               <Pressable
-                style={[styles.confirmButton, !allRequiredChecked && styles.buttonDisabled]}
+                style={[styles.confirmButton, (!allRequiredChecked || isLoading) && styles.buttonDisabled]}
                 onPress={handleAgreementConfirm}
-                disabled={!allRequiredChecked}
+                disabled={!allRequiredChecked || isLoading}
               >
-                <Text style={styles.confirmButtonText}>다음</Text>
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>다음</Text>
+                )}
               </Pressable>
             </View>
           </Animated.View>

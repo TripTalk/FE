@@ -1,23 +1,48 @@
+import { useAuth } from '@/contexts/AuthContext';
+import { login } from '@/services/api';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { saveTokens } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (email.trim() && password.trim()) {
-      router.push('/(tabs)' as any);
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim() || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const response = await login({ email: email.trim(), password });
+      console.log('로그인 성공:', response);
+
+      if (response.isSuccess) {
+        // 토큰 저장
+        await saveTokens({
+          accessToken: response.result.accessToken,
+          refreshToken: response.result.refreshToken,
+        });
+        // 홈 화면으로 이동
+        router.replace('/(tabs)' as any);
+      } else {
+        Alert.alert('로그인 실패', response.message || '이메일 또는 비밀번호를 확인해주세요.');
+      }
+    } catch (error: any) {
+      console.error('로그인 오류:', error);
+      Alert.alert('오류', error.message || '서버 연결에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleBack = () => {
-    router.back();
+    router.replace('/auth/start' as any);
   };
 
   return (
@@ -75,11 +100,15 @@ export default function LoginScreen() {
 
           {/* Login Button */}
           <Pressable
-            style={[styles.loginButton, (!email.trim() || !password.trim()) && styles.buttonDisabled]}
+            style={[styles.loginButton, (!email.trim() || !password.trim() || isLoading) && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={!email.trim() || !password.trim()}
+            disabled={!email.trim() || !password.trim() || isLoading}
           >
-            <Text style={styles.loginButtonText}>로그인</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.loginButtonText}>로그인</Text>
+            )}
           </Pressable>
         </View>
       </View>
