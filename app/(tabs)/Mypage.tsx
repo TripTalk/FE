@@ -1,9 +1,11 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
 import { logout } from '@/services/api';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Badge } from 'react-native-elements';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
 const COLORS = {
@@ -30,24 +32,54 @@ const StatItem = ({ value, label, color, onPress }: StatItemProps) => (
 
 // 뱃지 아이템
 type BadgeItemProps = { label: string };
-const BadgeItem = ({ label }: BadgeItemProps) => (
-  <View style={styles.badgeItem}>
-    <View style={styles.badgeIconBackground}>
-      <View style={styles.iconPlaceholder} />
+const badgeIcons: Record<string, { icon: string; color: string }> = {
+  '첫 여행': { icon: 'star', color: '#FFD700' }, // gold
+  '사진 마니아': { icon: 'camera-alt', color: '#4A90E2' }, // blue
+  '탐험가': { icon: 'explore', color: '#50E3C2' }, // teal
+  '미획득': { icon: 'lock-outline', color: '#BDBDBD' }, // gray
+};
+const BadgeItem = ({ label }: BadgeItemProps) => {
+  const { icon, color } = badgeIcons[label] || { icon: 'emoji-events', color: '#A0A0A0' };
+  return (
+    <View style={styles.badgeItem}>
+      <Badge
+        value={<MaterialIcons name={icon} size={28} color={'#fff'} />}
+        badgeStyle={{
+          backgroundColor: color,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.12,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+        containerStyle={{ marginBottom: 8 }}
+      />
+      <ThemedText style={styles.badgeLabel}>{label}</ThemedText>
     </View>
-    <ThemedText style={styles.badgeLabel}>{label}</ThemedText>
-  </View>
-);
+  );
+};
 
 // 메뉴 로우
 type MenuRowProps = { text: string; color?: string; onPress?: () => void };
+const menuIcons: Record<string, string> = {
+  '이용약관': 'description',
+  '개인정보처리방침': 'privacy-tip',
+  '앱 정보': 'info',
+  '로그아웃': 'logout',
+  '회원탈퇴': 'person-remove',
+};
 const MenuRow = ({ text, color = COLORS.textPrimary, onPress }: MenuRowProps) => (
   <TouchableOpacity style={styles.menuRow} onPress={onPress}>
     <View style={styles.menuRowLeft}>
-      <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center' }}>
+        <MaterialIcons name={menuIcons[text] || 'circle'} size={18} color={color === COLORS.danger ? COLORS.danger : '#A0A0A0'} />
+      </View>
       <ThemedText style={[styles.menuRowText, { color }]}>{text}</ThemedText>
     </View>
-    <View style={[styles.iconPlaceholder, { width: 16, height: 16 }]} />
   </TouchableOpacity>
 );
 
@@ -102,7 +134,7 @@ export default function MyPageScreen() {
           >
             <View style={styles.profileImageContainer}>
               <Image 
-                source={require('@/assets/images/profile1.png')} 
+                source={require('@/assets/images/person1.png')} 
                 style={styles.defaultProfileImage} 
               />
             </View>
