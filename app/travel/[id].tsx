@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DaySchedule } from '@/components/repository/DaySchedule';
 import { PriceInfo } from '@/components/repository/PriceInfo';
 import { ShareModal } from '@/components/repository/ShareModal';
-import { TravelDetailHeader } from '@/components/repository/TravelDetailHeader';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
 
@@ -194,51 +193,59 @@ export default function TravelDetailScreen() {
 
   if (!travel) {
     return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <TravelDetailHeader title="여행 정보를 찾을 수 없습니다" />
-        </SafeAreaView>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.cardInfoBox}>
+          <ThemedText style={styles.cardTitle}>여행 정보를 찾을 수 없습니다.</ThemedText>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <TravelDetailHeader title="여행 일정" />
-      </SafeAreaView>
-      
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* 여행 이미지 및 기본 정보 */}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.scrollView}>
+        {/* 여행 대표 이미지 */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: travel.image }} style={styles.image} />
         </View>
-        
         <View style={styles.content}>
-          {/* 여행 제목 및 기본 정보 */}
-          <ThemedView style={styles.basicInfo}>
-            <ThemedText style={styles.title}>{travel.title}</ThemedText>
-            <View style={styles.infoRow}>
-              <ThemedText style={styles.label}>📍 목적지</ThemedText>
-              <ThemedText style={styles.value}>{travel.location}</ThemedText>
-            </View>
-            <View style={styles.infoRow}>
-              <ThemedText style={styles.label}>📅 일정</ThemedText>
-              <ThemedText style={styles.value}>
-                {travel.startDate} - {travel.endDate}
-              </ThemedText>
-            </View>
-            <View style={styles.infoRow}>
-              <ThemedText style={styles.label}>👥 인원</ThemedText>
-              <ThemedText style={styles.value}>{travel.price}</ThemedText>
-            </View>
-            {travel.description && (
-              <View style={styles.descriptionContainer}>
-                <ThemedText style={styles.label}>✏️ 여행 소개</ThemedText>
-                <ThemedText style={styles.description}>{travel.description}</ThemedText>
+          {/* 여행 정보 카드 */}
+          <View style={styles.cardInfoBox}>
+            <ThemedText style={styles.cardTitle}>{travel.title}</ThemedText>
+            <View style={styles.infoGrid}>
+              <View style={styles.infoCol}>
+                <View style={styles.infoRow2}>
+                  <ThemedText style={styles.cardLabel}>📍 목적지</ThemedText>
+                </View>
+                <ThemedText style={styles.cardValue}>{travel.location}</ThemedText>
+                <View style={[styles.infoRow2, { marginTop: 16 }]}> 
+                  <ThemedText style={styles.cardLabel}>👥 인원</ThemedText>
+                </View>
+                <ThemedText style={styles.cardValue}>연인</ThemedText>
               </View>
-            )}
-          </ThemedView>
+              <View style={styles.infoCol}>
+                <View style={styles.infoRow2}>
+                  <ThemedText style={styles.cardLabel}>📅 기간</ThemedText>
+                </View>
+                <ThemedText style={styles.cardValue}>{travel.startDate} - {travel.endDate}</ThemedText>
+                <View style={[styles.infoRow2, { marginTop: 16 }]}> 
+                  <ThemedText style={styles.cardLabel}>💰 예산</ThemedText>
+                </View>
+                <ThemedText style={styles.cardValue}>{travel.price}</ThemedText>
+              </View>
+            </View>
+            {/* 여행 스타일 태그 */}
+            <View style={{ marginTop: 12 }}>
+              <View style={styles.infoRow2}>
+                <ThemedText style={styles.cardLabel}>🎨 여행 스타일</ThemedText>
+              </View>
+              <View style={styles.styleTagRow}>
+                <ThemedText style={styles.styleTag}>#힐링</ThemedText>
+                <ThemedText style={styles.styleTag}>#자연과 함께</ThemedText>
+                <ThemedText style={styles.styleTag}>#카페투어</ThemedText>
+              </View>
+            </View>
+          </View>
 
           {/* 여행 일정 */}
           <ThemedView style={styles.section}>
@@ -267,7 +274,6 @@ export default function TravelDetailScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
       {/* 공유 모달 */}
       <ShareModal
         visible={shareModalVisible}
@@ -278,11 +284,27 @@ export default function TravelDetailScreen() {
           image: travel?.image || '',
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  infoGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 8,
+  },
+  infoCol: {
+    flex: 1,
+    gap: 8,
+  },
+  infoRow2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+    flexWrap: 'wrap',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -305,42 +327,70 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
-  basicInfo: {
+  cardInfoBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
+    padding: 20,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  title: {
-    fontSize: 20,
+  cardTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 16,
+    color: '#1A2A3A',
+    marginBottom: 18,
   },
-  infoRow: {
+  cardInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 10,
+    flexWrap: 'wrap',
+  },
+  cardLabel: {
+    fontSize: 15,
+    color: '#3A4A5A',
+    marginRight: 8,
+    fontWeight: '500',
+    minWidth: 60,
+  },
+  cardValue: {
+    fontSize: 15,
+    color: '#222',
+    marginRight: 18,
+    fontWeight: '400',
+    minWidth: 80,
+  },
+  styleTagRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 8,
+  },
+  styleTag: {
+    backgroundColor: '#EAF6F3',
+    color: '#3AAFA9',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 6,
+    fontWeight: '500',
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 18,
     marginBottom: 8,
   },
-  label: {
-    fontSize: 14,
-    color: '#666666',
-    width: 80,
-    marginRight: 12,
-  },
-  value: {
-    fontSize: 14,
-    color: '#333333',
-    flex: 1,
-  },
-  descriptionContainer: {
-    marginTop: 8,
-  },
-  description: {
-    fontSize: 14,
-    color: '#666666',
-    lineHeight: 20,
-    marginTop: 4,
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
   },
   section: {
     backgroundColor: '#FFFFFF',
