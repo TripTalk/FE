@@ -45,7 +45,6 @@ export default function RepositoryScreen() {
       setIsRefreshing(false);
     }, 1000);
   };
-  };
 
   const handleCardPress = (tripPlanId: number) => {
     // TODO: 상세 페이지로 이동

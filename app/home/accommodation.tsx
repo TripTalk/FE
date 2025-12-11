@@ -70,8 +70,6 @@ export default function AccommodationScreen() {
               title={`${item.departure} → ${item.destination}`}
               tag="항공"
               price={`${item.price.toLocaleString()}원`}
-              originalPrice={item.originalPrice ? `${item.originalPrice.toLocaleString()}원` : undefined}
-              discount={item.discount ? `${item.discount}%` : undefined}
               imageUrl={item.imgUrl}
             />
           ))}
