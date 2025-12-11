@@ -230,6 +230,54 @@ export const refreshToken = async (refreshTokenValue: string): Promise<RefreshTo
 };
 
 // =====================
+// 👤 사용자 정보 관련 API
+// =====================
+
+// 사용자 정보 타입
+export interface UserInfo {
+  userId: number;
+  email: string;
+  nickname: string;  // 백엔드는 소문자 nickname 사용
+  profileImgUrl?: string | null;
+  completedTravelCount: number;
+  plannedTravelCount: number;
+}
+
+// 마이페이지 응답 타입
+export interface UserInfoResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: UserInfo;
+}
+
+/**
+ * 마이페이지 조회 API
+ * GET /api/user/me
+ * 현재 로그인한 사용자의 정보를 조회합니다.
+ */
+export const getUserInfo = async (accessToken: string): Promise<UserInfoResponse> => {
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/user/me`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// =====================
 // 🗺️ 여행 계획 관련 API
 // =====================
 

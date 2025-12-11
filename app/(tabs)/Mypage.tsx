@@ -1,8 +1,8 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
-import { logout } from '@/services/api';
+import { getUserInfo, logout, UserInfo } from '@/services/api';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
@@ -56,6 +56,34 @@ export default function MyPageScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 사용자 정보 조회
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!tokens?.accessToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        console.log('=== 마이페이지 정보 조회 ===');
+        const response = await getUserInfo(tokens.accessToken);
+        
+        if (response.isSuccess && response.result) {
+          setUserInfo(response.result);
+          console.log('사용자 정보:', response.result);
+        }
+      } catch (error: any) {
+        console.log('사용자 정보 조회 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, [tokens]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -94,36 +122,43 @@ export default function MyPageScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <ThemedText style={styles.headerTitle}>마이페이지</ThemedText>
 
-        <View style={styles.card}>
-          <TouchableOpacity 
-            style={styles.profileHeader}
-            onPress={() => router.push('/mypage/edit-profile')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.profileImageContainer}>
-              <Image 
-                source={require('@/assets/images/profile1.png')} 
-                style={styles.defaultProfileImage} 
-              />
-            </View>
-            <View style={styles.profileInfo}>
-              <ThemedText style={styles.profileName}>김여행</ThemedText>
-              <ThemedText style={styles.profileBio}>여행을 사랑하는 모험가</ThemedText>
-            </View>
-            <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
-          </TouchableOpacity>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4ECDC4" />
+            <ThemedText style={styles.loadingText}>정보를 불러오는 중...</ThemedText>
+          </View>
+        ) : (
+          <>
+            <View style={styles.card}>
+              <TouchableOpacity 
+                style={styles.profileHeader}
+                onPress={() => router.push('/mypage/edit-profile')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.profileImageContainer}>
+                  <Image 
+                    source={require('@/assets/images/profile1.png')} 
+                    style={styles.defaultProfileImage} 
+                  />
+                </View>
+                <View style={styles.profileInfo}>
+                  <ThemedText style={styles.profileName}>{userInfo?.nickname || '사용자'}</ThemedText>
+                  <ThemedText style={styles.profileBio}>{userInfo?.email || ''}</ThemedText>
+                </View>
+                <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
+              </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <View style={styles.statsContainer}>
             <StatItem 
-              value="12" 
+              value={userInfo?.completedTravelCount?.toString() || "0"} 
               label="완료한 여행" 
               color={COLORS.stat1}
               onPress={() => router.push('/(tabs)/explore?tab=completed')}
             />
             <StatItem 
-              value="8" 
+              value={userInfo?.plannedTravelCount?.toString() || "0"} 
               label="계획 중인 여행" 
               color={COLORS.stat2}
               onPress={() => router.push('/(tabs)/explore?tab=planned')}
@@ -172,15 +207,15 @@ export default function MyPageScreen() {
             color={COLORS.danger} 
             onPress={() => setShowLogoutModal(true)}
           />
-          <MenuRow 
-            text="회원탈퇴" 
-            color={COLORS.danger} 
-            onPress={() => setShowDeleteModal(true)}
-          />
-        </View>
-      </ScrollView>
-
-      {/* 로그아웃 확인 모달 */}
+            <MenuRow 
+              text="회원탈퇴" 
+              color={COLORS.danger} 
+              onPress={() => setShowDeleteModal(true)}
+            />
+          </View>
+        </>
+        )}
+      </ScrollView>      {/* 로그아웃 확인 모달 */}
       <Modal
         visible={showLogoutModal}
         transparent={true}
@@ -343,6 +378,17 @@ const styles = StyleSheet.create({
   menuRowLeft: { flexDirection: 'row', alignItems: 'center' },
   menuRowText: { fontSize: 16, marginLeft: 12 },
   iconPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: COLORS.iconPlaceholder },
+  // 로딩 상태
+  loadingContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666666',
+  },
   // 모달 스타일
   modalOverlay: {
     flex: 1,
