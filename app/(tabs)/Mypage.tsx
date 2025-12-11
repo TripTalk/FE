@@ -1,11 +1,10 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
-import { logout } from '@/services/api';
+import { getUserInfo, logout, UserInfo } from '@/services/api';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Badge } from 'react-native-elements';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
 const COLORS = {
@@ -32,32 +31,32 @@ const StatItem = ({ value, label, color, onPress }: StatItemProps) => (
 
 // 뱃지 아이템
 type BadgeItemProps = { label: string };
-const badgeIcons: Record<string, { icon: string; color: string }> = {
-  '첫 여행': { icon: 'star', color: '#FFD700' }, // gold
-  '사진 마니아': { icon: 'camera-alt', color: '#4A90E2' }, // blue
-  '탐험가': { icon: 'explore', color: '#50E3C2' }, // teal
-  '미획득': { icon: 'lock-outline', color: '#BDBDBD' }, // gray
+const badgeIcons: Record<string, { icon: keyof typeof MaterialIcons.glyphMap; color: string }> = {
+  '첫 여행': { icon: 'star', color: '#FFD700' },
+  '사진 마니아': { icon: 'camera-alt', color: '#4A90E2' },
+  '탐험가': { icon: 'explore', color: '#50E3C2' },
+  '미획득': { icon: 'lock-outline', color: '#BDBDBD' },
 };
 const BadgeItem = ({ label }: BadgeItemProps) => {
-  const { icon, color } = badgeIcons[label] || { icon: 'emoji-events', color: '#A0A0A0' };
+  const { icon, color } = badgeIcons[label] || { icon: 'emoji-events' as keyof typeof MaterialIcons.glyphMap, color: '#A0A0A0' };
   return (
     <View style={styles.badgeItem}>
-      <Badge
-        value={<MaterialIcons name={icon} size={28} color={'#fff'} />}
-        badgeStyle={{
-          backgroundColor: color,
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          justifyContent: 'center',
-          alignItems: 'center',
-          shadowColor: '#000',
-          shadowOpacity: 0.12,
-          shadowRadius: 4,
-          elevation: 2,
-        }}
-        containerStyle={{ marginBottom: 8 }}
-      />
+      <View style={{
+        backgroundColor: color,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+        marginBottom: 8,
+      }}>
+        <MaterialIcons name={icon} size={28} color="#fff" />
+      </View>
       <ThemedText style={styles.badgeLabel}>{label}</ThemedText>
     </View>
   );
@@ -65,7 +64,7 @@ const BadgeItem = ({ label }: BadgeItemProps) => {
 
 // 메뉴 로우
 type MenuRowProps = { text: string; color?: string; onPress?: () => void };
-const menuIcons: Record<string, string> = {
+const menuIcons: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   '이용약관': 'description',
   '개인정보처리방침': 'privacy-tip',
   '앱 정보': 'info',
@@ -88,6 +87,34 @@ export default function MyPageScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!tokens?.accessToken) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const response = await getUserInfo(tokens.accessToken);
+        console.log('=== 사용자 정보 전체 응답 ===');
+        console.log(JSON.stringify(response, null, 2));
+        console.log('=== result 데이터 ===');
+        console.log(JSON.stringify(response.result, null, 2));
+        console.log('nickname:', response.result?.nickname);
+        console.log('email:', response.result?.email);
+        setUserInfo(response.result);
+      } catch (error) {
+        console.log('사용자 정보 조회 오류:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, [tokens?.accessToken]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -139,8 +166,8 @@ export default function MyPageScreen() {
               />
             </View>
             <View style={styles.profileInfo}>
-              <ThemedText style={styles.profileName}>김여행</ThemedText>
-              <ThemedText style={styles.profileBio}>여행을 사랑하는 모험가</ThemedText>
+              <ThemedText style={styles.profileName}>{isLoading ? '로딩 중...' : (userInfo?.nickname || '사용자')}</ThemedText>
+              <ThemedText style={styles.profileBio}>{userInfo?.email || ''}</ThemedText>
             </View>
             <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
           </TouchableOpacity>
@@ -149,13 +176,13 @@ export default function MyPageScreen() {
 
           <View style={styles.statsContainer}>
             <StatItem 
-              value="12" 
+              value={String(userInfo?.completedTravelCount || 0)}
               label="완료한 여행" 
               color={COLORS.stat1}
               onPress={() => router.push('/(tabs)/explore?tab=completed')}
             />
             <StatItem 
-              value="8" 
+              value={String(userInfo?.plannedTravelCount || 0)}
               label="계획 중인 여행" 
               color={COLORS.stat2}
               onPress={() => router.push('/(tabs)/explore?tab=planned')}
