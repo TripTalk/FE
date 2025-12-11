@@ -10,7 +10,7 @@ interface AccommodationCardProps {
   date?: string;
   discount?: string;
   imageUrl: string;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 export const AccommodationCard: React.FC<AccommodationCardProps> = ({ 
@@ -24,7 +24,12 @@ export const AccommodationCard: React.FC<AccommodationCardProps> = ({
   onPress 
 }) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity 
+      style={styles.container} 
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+    >
       <Image
         source={{ uri: imageUrl }}
         style={styles.image}

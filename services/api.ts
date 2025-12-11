@@ -355,7 +355,7 @@ export const getTravelSummary = async (travelId: string): Promise<string> => {
 // 테마 필터 타입
 export type TripPlaceTheme = 'NATURE' | 'SEA' | 'CULTURE' | 'HEALING' | 'HISTORY';
 
-// 여행지 정보 타입
+// 여행지 정보 타입 (목록용)
 export interface TripPlace {
   id: number;
   region: string;
@@ -363,6 +363,18 @@ export interface TripPlace {
   viewCount: number;
   imgUrl: string;
   themes: TripPlaceTheme[];
+}
+
+// 여행지 상세 정보 타입
+export interface TripPlaceDetail {
+  id: number;
+  name: string;
+  imageUrls: string[];
+  fullDescription: string;
+  address: string;
+  lat: number;
+  lon: number;
+  tags: string[];
 }
 
 // 여행지 목록 응답 타입
@@ -423,3 +435,188 @@ export const getTripPlaces = async (
 
   return await response.json();
 };
+
+/**
+ * 여행지 상세 조회 API
+ * GET /api/trip-place?id={id}
+ */
+export const getTripPlaceDetail = async (
+  id: number,
+  accessToken?: string
+): Promise<{
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: TripPlaceDetail;
+}> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  console.log('🔑 API 함수 - accessToken 파라미터:', accessToken ? accessToken.substring(0, 30) + '...' : 'NONE');
+  console.log('📤 전송할 헤더:', JSON.stringify(headers, null, 2));
+  
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/trip-place?id=${id}`,
+    {
+      method: 'GET',
+      headers,
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// =====================
+// ✈️ 항공 관련 API
+// =====================
+
+// 항공권 정보 타입
+export interface Flight {
+  id: number;
+  departure: string;
+  destination: string;
+  price: number;
+  originalPrice?: number;
+  discount?: number;
+  imgUrl: string;
+  airline?: string;
+  departureDate?: string;
+  returnDate?: string;
+}
+
+// 항공권 목록 응답 타입
+export interface FlightListResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    flightList: Flight[];
+    flightListSize: number;
+    isFirst: boolean;
+    hasNext: boolean;
+    nextCursorId: number | null;
+  };
+}
+
+/**
+ * 항공권 목록 조회 API
+ * GET /api/flight
+ */
+export const getFlights = async (
+  cursorId?: number | null,
+  accessToken?: string
+): Promise<FlightListResponse> => {
+  const params = new URLSearchParams();
+  if (cursorId !== undefined && cursorId !== null) {
+    params.append('cursorId', cursorId.toString());
+  }
+  
+  const queryString = params.toString();
+  const url = `${AUTH_API_BASE_URL}/api/flight${queryString ? `?${queryString}` : ''}`;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      headers,
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// =====================
+// 🏨 숙박 관련 API
+// =====================
+
+// 숙박 정보 타입
+export interface Accommodation {
+  id: number;
+  name: string;
+  location: string;
+  price: number;
+  imgUrl: string;
+  rating?: number;
+  checkIn?: string;
+  checkOut?: string;
+}
+
+// 숙박 목록 응답 타입
+export interface AccommodationListResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    accommodationList: Accommodation[];
+    accommodationListSize: number;
+    isFirst: boolean;
+    hasNext: boolean;
+    nextCursorId: number | null;
+  };
+}
+
+/**
+ * 숙박 목록 조회 API
+ * GET /api/accommodation
+ */
+export const getAccommodations = async (
+  cursorId?: number | null,
+  accessToken?: string
+): Promise<AccommodationListResponse> => {
+  const params = new URLSearchParams();
+  if (cursorId !== undefined && cursorId !== null) {
+    params.append('cursorId', cursorId.toString());
+  }
+  
+  const queryString = params.toString();
+  const url = `${AUTH_API_BASE_URL}/api/accommodation${queryString ? `?${queryString}` : ''}`;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      headers,
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+
+

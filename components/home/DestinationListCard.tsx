@@ -8,7 +8,8 @@ interface DestinationListCardProps {
   viewCount: string;
   tags: string[];
   imageUrl: string;
-  onPress: () => void;
+  onPress?: () => void;
+  onPlanPress?: () => void;
 }
 
 export function DestinationListCard({
@@ -18,9 +19,15 @@ export function DestinationListCard({
   tags,
   imageUrl,
   onPress,
+  onPlanPress,
 }: DestinationListCardProps) {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity 
+      style={styles.container} 
+      onPress={onPress} 
+      disabled={!onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+    >
       <Image source={{ uri: imageUrl }} style={styles.image} />
       <View style={styles.content}>
         <View style={styles.header}>
@@ -37,7 +44,13 @@ export function DestinationListCard({
           ))}
         </View>
         
-        <TouchableOpacity style={styles.detailButton}>
+        <TouchableOpacity 
+          style={styles.detailButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            onPlanPress ? onPlanPress() : onPress();
+          }}
+        >
           <ThemedText style={styles.detailButtonText}>여행 계획 세우기</ThemedText>
         </TouchableOpacity>
       </View>

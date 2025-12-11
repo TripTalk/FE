@@ -5,13 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getTripPlaces, TripPlace, TripPlaceTheme } from '@/services/api';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
-    Easing,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,6 +34,15 @@ const themeToKorean: Record<string, string> = {
   'HISTORY': '역사',
 };
 
+// 테마별 아이콘 이미지
+const themeIcons: Record<string, any> = {
+  '자연': require('@/assets/images/nature.png'),
+  '바다': require('@/assets/images/sea.png'),
+  '문화': require('@/assets/images/culture.png'),
+  '힐링': require('@/assets/images/healing.png'),
+  '역사': require('@/assets/images/history.png'),
+};
+
 export default function PopularDestinationsScreen() {
   const { tokens } = useAuth();
   const [selectedTheme, setSelectedTheme] = useState<string>('전체');
@@ -46,7 +55,7 @@ export default function PopularDestinationsScreen() {
   // 애니메이션 값
   const animationProgress = useSharedValue(0);
   const COLLAPSED_HEIGHT = 0;
-  const EXPANDED_HEIGHT = 140;
+  const EXPANDED_HEIGHT = 280;
 
   // API에서 여행지 데이터 가져오기
   const fetchDestinations = async (theme?: TripPlaceTheme, cursor?: number | null) => {
@@ -76,8 +85,15 @@ export default function PopularDestinationsScreen() {
     fetchDestinations(apiTheme, null);
   }, [selectedTheme]);
 
-  const handleTravelPress = (id: number) => {
-    router.push(`/travel/${id}`);
+  const handlePlanPress = (destination: TripPlace) => {
+    // AI 여행 계획 페이지로 이동하면서 도착지 정보 전달
+    router.push({
+      pathname: '/ai-chat/plan-trip-step1',
+      params: {
+        destination: destination.region,
+        destinationId: destination.id.toString(),
+      }
+    });
   };
 
   const handleThemeSelect = (theme: string) => {
@@ -132,11 +148,24 @@ export default function PopularDestinationsScreen() {
     }
   };
 
+  // 스크롤 끝 감지하여 자동으로 데이터 로드
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20; // 스크롤이 끝에서 20px 전에 트리거
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+    
+    if (isCloseToBottom) {
+      loadMore();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={400}
       >
           {/* 여행 테마별 보기 */}
           <ThemedView style={styles.sectionContainer}>
@@ -152,26 +181,42 @@ export default function PopularDestinationsScreen() {
             </TouchableOpacity>
 
             <Animated.View style={containerAnimatedStyle}>
-              <View style={styles.themeGrid}>
-                {themeCategories.map((theme) => {
-                  const isSelected = selectedTheme === theme;
-                  return (
-                    <TouchableOpacity 
-                      key={theme} 
-                      style={[
-                        styles.themeButton,
-                        isSelected && styles.themeButtonSelected
-                      ]}
-                      onPress={() => handleThemeSelect(theme)}
-                      activeOpacity={0.7}
-                    >
-                      <ThemedText style={[
-                        styles.themeButtonText,
-                        isSelected && styles.themeButtonTextSelected
-                      ]}>{theme}</ThemedText>
-                    </TouchableOpacity>
-                  );
-                })}
+              <View style={styles.themeCardContainer}>
+                <View style={styles.themeGrid}>
+                  {themeCategories.map((theme) => {
+                    const isSelected = selectedTheme === theme;
+                    return (
+                      <TouchableOpacity 
+                        key={theme} 
+                        style={styles.themeItem}
+                        onPress={() => handleThemeSelect(theme)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[
+                          styles.themeIconContainer,
+                          isSelected && styles.themeIconContainerSelected
+                        ]}>
+                          {theme === '전체' ? (
+                            <ThemedText style={[
+                              styles.allText,
+                              isSelected && styles.allTextSelected
+                            ]}>All</ThemedText>
+                          ) : (
+                            <Image 
+                              source={themeIcons[theme]} 
+                              style={styles.themeIcon}
+                              resizeMode="contain"
+                            />
+                          )}
+                        </View>
+                        <ThemedText style={[
+                          styles.themeLabel,
+                          isSelected && styles.themeLabelSelected
+                        ]} numberOfLines={1}>{theme}</ThemedText>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
             </Animated.View>
           </ThemedView>
@@ -195,23 +240,16 @@ export default function PopularDestinationsScreen() {
                     title={destination.region}
                     subtitle={destination.description}
                     viewCount={`${destination.viewCount.toLocaleString()}회`}
-                    tags={destination.themes.map(t => `#${themeToKorean[t] || t}`)}
+                    tags={destination.themes.map(t => themeToKorean[t] || t)}
                     imageUrl={destination.imgUrl}
-                    onPress={() => handleTravelPress(destination.id)}
+                    onPlanPress={() => handlePlanPress(destination)}
                   />
                 ))}
-                {hasNext && (
-                  <TouchableOpacity 
-                    style={styles.loadMoreButton} 
-                    onPress={loadMore}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator size="small" color="#4ECDC4" />
-                    ) : (
-                      <ThemedText style={styles.loadMoreText}>더 보기</ThemedText>
-                    )}
-                  </TouchableOpacity>
+                {isLoading && destinations.length > 0 && (
+                  <View style={styles.loadingMoreContainer}>
+                    <ActivityIndicator size="small" color="#4ECDC4" />
+                    <ThemedText style={styles.loadingMoreText}>더 불러오는 중...</ThemedText>
+                  </View>
                 )}
               </>
             )}
@@ -230,7 +268,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
     marginBottom: 16,
     paddingVertical: 20,
     paddingHorizontal: 16,
@@ -256,32 +294,67 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontWeight: 'bold',
   },
+  themeCardContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 4,
+    marginTop: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   themeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingTop: 16,
-    gap: 10,
+    justifyContent: 'space-between',
   },
-  themeButton: {
-    width: '31%',
-    paddingVertical: 14,
+  themeItem: {
+    width: '30%',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  themeIconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#EEEEEE',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  themeButtonSelected: {
-    backgroundColor: '#F0FFFE',
+  themeIconContainerSelected: {
+    backgroundColor: '#E3F9F6',
     borderColor: '#4ECDC4',
   },
-  themeButtonText: {
-    fontSize: 15,
+  themeIcon: {
+    width: 40,
+    height: 40,
+  },
+  allText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  allTextSelected: {
+    color: '#4ECDC4',
+    fontWeight: '700',
+  },
+  themeLabel: {
+    fontSize: 14,
     fontWeight: '500',
     color: '#555555',
+    textAlign: 'center',
   },
-  themeButtonTextSelected: {
+  themeLabelSelected: {
     color: '#2DBDAD',
     fontWeight: '700',
   },
@@ -308,18 +381,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#999999',
   },
-  loadMoreButton: {
+  loadingMoreContainer: {
     marginTop: 16,
-    paddingVertical: 14,
-    backgroundColor: '#F0FFFE',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4ECDC4',
+    paddingVertical: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  loadMoreText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#4ECDC4',
+  loadingMoreText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#666666',
   },
 });
