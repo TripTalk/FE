@@ -1,9 +1,11 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserInfo, logout, UserInfo } from '@/services/api';
+import { logout } from '@/services/api';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Badge } from 'react-native-elements';
 
 // --- 피그마 디자인 값 (필요 시 constants로 승격 가능) ---
 const COLORS = {
@@ -30,24 +32,54 @@ const StatItem = ({ value, label, color, onPress }: StatItemProps) => (
 
 // 뱃지 아이템
 type BadgeItemProps = { label: string };
-const BadgeItem = ({ label }: BadgeItemProps) => (
-  <View style={styles.badgeItem}>
-    <View style={styles.badgeIconBackground}>
-      <View style={styles.iconPlaceholder} />
+const badgeIcons: Record<string, { icon: string; color: string }> = {
+  '첫 여행': { icon: 'star', color: '#FFD700' }, // gold
+  '사진 마니아': { icon: 'camera-alt', color: '#4A90E2' }, // blue
+  '탐험가': { icon: 'explore', color: '#50E3C2' }, // teal
+  '미획득': { icon: 'lock-outline', color: '#BDBDBD' }, // gray
+};
+const BadgeItem = ({ label }: BadgeItemProps) => {
+  const { icon, color } = badgeIcons[label] || { icon: 'emoji-events', color: '#A0A0A0' };
+  return (
+    <View style={styles.badgeItem}>
+      <Badge
+        value={<MaterialIcons name={icon} size={28} color={'#fff'} />}
+        badgeStyle={{
+          backgroundColor: color,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.12,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+        containerStyle={{ marginBottom: 8 }}
+      />
+      <ThemedText style={styles.badgeLabel}>{label}</ThemedText>
     </View>
-    <ThemedText style={styles.badgeLabel}>{label}</ThemedText>
-  </View>
-);
+  );
+};
 
 // 메뉴 로우
 type MenuRowProps = { text: string; color?: string; onPress?: () => void };
+const menuIcons: Record<string, string> = {
+  '이용약관': 'description',
+  '개인정보처리방침': 'privacy-tip',
+  '앱 정보': 'info',
+  '로그아웃': 'logout',
+  '회원탈퇴': 'person-remove',
+};
 const MenuRow = ({ text, color = COLORS.textPrimary, onPress }: MenuRowProps) => (
   <TouchableOpacity style={styles.menuRow} onPress={onPress}>
     <View style={styles.menuRowLeft}>
-      <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center' }}>
+        <MaterialIcons name={menuIcons[text] || 'circle'} size={18} color={color === COLORS.danger ? COLORS.danger : '#A0A0A0'} />
+      </View>
       <ThemedText style={[styles.menuRowText, { color }]}>{text}</ThemedText>
     </View>
-    <View style={[styles.iconPlaceholder, { width: 16, height: 16 }]} />
   </TouchableOpacity>
 );
 
@@ -56,34 +88,6 @@ export default function MyPageScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 사용자 정보 조회
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (!tokens?.accessToken) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        console.log('=== 마이페이지 정보 조회 ===');
-        const response = await getUserInfo(tokens.accessToken);
-        
-        if (response.isSuccess && response.result) {
-          setUserInfo(response.result);
-          console.log('사용자 정보:', response.result);
-        }
-      } catch (error: any) {
-        console.log('사용자 정보 조회 실패:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserInfo();
-  }, [tokens]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -122,43 +126,36 @@ export default function MyPageScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <ThemedText style={styles.headerTitle}>마이페이지</ThemedText>
 
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4ECDC4" />
-            <ThemedText style={styles.loadingText}>정보를 불러오는 중...</ThemedText>
-          </View>
-        ) : (
-          <>
-            <View style={styles.card}>
-              <TouchableOpacity 
-                style={styles.profileHeader}
-                onPress={() => router.push('/mypage/edit-profile')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.profileImageContainer}>
-                  <Image 
-                    source={require('@/assets/images/profile1.png')} 
-                    style={styles.defaultProfileImage} 
-                  />
-                </View>
-                <View style={styles.profileInfo}>
-                  <ThemedText style={styles.profileName}>{userInfo?.nickname || '사용자'}</ThemedText>
-                  <ThemedText style={styles.profileBio}>{userInfo?.email || ''}</ThemedText>
-                </View>
-                <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
-              </TouchableOpacity>
+        <View style={styles.card}>
+          <TouchableOpacity 
+            style={styles.profileHeader}
+            onPress={() => router.push('/mypage/edit-profile')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.profileImageContainer}>
+              <Image 
+                source={require('@/assets/images/person1.png')} 
+                style={styles.defaultProfileImage} 
+              />
+            </View>
+            <View style={styles.profileInfo}>
+              <ThemedText style={styles.profileName}>김여행</ThemedText>
+              <ThemedText style={styles.profileBio}>여행을 사랑하는 모험가</ThemedText>
+            </View>
+            <View style={[styles.iconPlaceholder, { width: 20, height: 20 }]} />
+          </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <View style={styles.statsContainer}>
             <StatItem 
-              value={userInfo?.completedTravelCount?.toString() || "0"} 
+              value="12" 
               label="완료한 여행" 
               color={COLORS.stat1}
               onPress={() => router.push('/(tabs)/explore?tab=completed')}
             />
             <StatItem 
-              value={userInfo?.plannedTravelCount?.toString() || "0"} 
+              value="8" 
               label="계획 중인 여행" 
               color={COLORS.stat2}
               onPress={() => router.push('/(tabs)/explore?tab=planned')}
@@ -207,15 +204,15 @@ export default function MyPageScreen() {
             color={COLORS.danger} 
             onPress={() => setShowLogoutModal(true)}
           />
-            <MenuRow 
-              text="회원탈퇴" 
-              color={COLORS.danger} 
-              onPress={() => setShowDeleteModal(true)}
-            />
-          </View>
-        </>
-        )}
-      </ScrollView>      {/* 로그아웃 확인 모달 */}
+          <MenuRow 
+            text="회원탈퇴" 
+            color={COLORS.danger} 
+            onPress={() => setShowDeleteModal(true)}
+          />
+        </View>
+      </ScrollView>
+
+      {/* 로그아웃 확인 모달 */}
       <Modal
         visible={showLogoutModal}
         transparent={true}
@@ -378,17 +375,6 @@ const styles = StyleSheet.create({
   menuRowLeft: { flexDirection: 'row', alignItems: 'center' },
   menuRowText: { fontSize: 16, marginLeft: 12 },
   iconPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: COLORS.iconPlaceholder },
-  // 로딩 상태
-  loadingContainer: {
-    paddingVertical: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666666',
-  },
   // 모달 스타일
   modalOverlay: {
     flex: 1,
