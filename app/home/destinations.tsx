@@ -1,6 +1,7 @@
 import { DestinationListCard } from '@/components/home/DestinationListCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
+import { useAuth } from '@/contexts/AuthContext';
 import { getTripPlaces, TripPlace, TripPlaceTheme } from '@/services/api';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -34,6 +35,7 @@ const themeToKorean: Record<string, string> = {
 };
 
 export default function PopularDestinationsScreen() {
+  const { tokens } = useAuth();
   const [selectedTheme, setSelectedTheme] = useState<string>('전체');
   const [isThemeSelectionExpanded, setIsThemeSelectionExpanded] = useState(false);
   const [destinations, setDestinations] = useState<TripPlace[]>([]);
@@ -50,13 +52,12 @@ export default function PopularDestinationsScreen() {
   const fetchDestinations = async (theme?: TripPlaceTheme, cursor?: number | null) => {
     setIsLoading(true);
     try {
-      const response = await getTripPlaces(theme, cursor);
+      const accessToken = tokens?.accessToken;
+      const response = await getTripPlaces(theme, cursor, accessToken);
       if (response.isSuccess && response.result) {
         if (cursor) {
-          // 다음 페이지 로드 시 기존 데이터에 추가
           setDestinations(prev => [...prev, ...response.result.tripPlaceList]);
         } else {
-          // 첫 페이지 로드 시 데이터 교체
           setDestinations(response.result.tripPlaceList);
         }
         setNextCursorId(response.result.nextCursorId);

@@ -387,7 +387,8 @@ export interface TripPlaceListResponse {
  */
 export const getTripPlaces = async (
   theme?: TripPlaceTheme,
-  cursorId?: number | null
+  cursorId?: number | null,
+  accessToken?: string
 ): Promise<TripPlaceListResponse> => {
   const params = new URLSearchParams();
   if (theme) {
@@ -400,13 +401,17 @@ export const getTripPlaces = async (
   const queryString = params.toString();
   const url = `${AUTH_API_BASE_URL}/api/trip-place${queryString ? `?${queryString}` : ''}`;
   
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
   const response = await fetchWithTimeout(
     url,
     {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     },
     DEFAULT_TIMEOUT_MS
   );
