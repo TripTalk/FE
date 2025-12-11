@@ -578,6 +578,7 @@ export interface AccommodationListResponse {
   };
 }
 
+
 /**
  * 숙박 목록 조회 API
  * GET /api/accommodation
@@ -618,5 +619,114 @@ export const getAccommodations = async (
   return await response.json();
 };
 
+// =====================
+// 💾 여행 계획 저장 API
+// =====================
+
+/**
+ * 여행 계획 저장 API
+ * POST /save-plan/{travel_id}
+ * FastAPI가 자동으로 Spring Boot에 저장
+ */
+export const saveTravelPlan = async (
+  travelId: string,
+  accessToken?: string
+): Promise<any> => {
+  console.log('=== 여행 계획 저장 시작 ===');
+  console.log('travel_id:', travelId);
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetchWithTimeout(
+    `${AI_API_BASE_URL}/save-plan/${encodeURIComponent(travelId)}`,
+    {
+      method: 'POST',
+      headers,
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.log('저장 실패:', errorData);
+    throw new Error(errorData.detail || `저장 실패: ${response.status}`);
+  }
+
+  const result = await response.json();
+  console.log('=== 저장 성공 ===');
+  console.log('Result:', result);
+  
+  // FastAPI가 200으로 응답하더라도 실제 결과 확인
+  if (result.success === false) {
+    console.log('Spring Boot 저장 실패:', result);
+    throw new Error(result.error || result.detail || '저장에 실패했습니다.');
+  }
+  
+  return result;
+};
+
+// 저장된 여행 계획 목록 조회
+export interface SavedTripPlan {
+  tripPlanId: number;
+  title: string;
+  destination: string;
+  departure: string;
+  startDate: string;
+  endDate: string;
+  companions: string;
+  budget: string;
+  travelStyles: string[];
+  imageUrl?: string;
+}
+
+export interface SavedTripPlansResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: {
+    tripPlanList: SavedTripPlan[];
+  };
+}
+
+/**
+ * 저장된 여행 계획 목록 조회 API
+ * GET /api/trip-plan/archive
+ */
+export const getSavedTripPlans = async (
+  accessToken?: string
+): Promise<SavedTripPlansResponse> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  console.log('=== 저장된 여행 계획 목록 조회 ===');
+  
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/trip-plan/archive`,
+    {
+      method: 'GET',
+      headers,
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.log('목록 조회 실패:', errorData);
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
 
 

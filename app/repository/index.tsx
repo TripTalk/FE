@@ -1,50 +1,54 @@
 import { TravelCard } from '@/components/repository/TravelCard';
 import { ThemedText } from '@/components/shared/themed-text';
+import { useAuth } from '@/contexts/AuthContext';
+import { getSavedTripPlans, SavedTripPlan } from '@/services/api';
+import { useFocusEffect } from '@react-navigation/native';
 import { Stack } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// 더미 데이터
-const DUMMY_TRIP_PLANS = [
-  {
-    tripPlanId: 1,
-    title: '제주도 힐링 여행',
-    destination: '제주도',
-    departure: '서울',
-    startDate: '2024-12-20',
-    endDate: '2024-12-23',
-    companions: '친구',
-    budget: '50만원',
-    travelStyles: ['힐링', '자연'],
-    imageUrl: 'https://picsum.photos/400/300?random=1',
-  },
-  {
-    tripPlanId: 2,
-    title: '부산 맛집 탐방',
-    destination: '부산',
-    departure: '서울',
-    startDate: '2024-12-15',
-    endDate: '2024-12-17',
-    companions: '가족',
-    budget: '70만원',
-    travelStyles: ['맛집', '관광'],
-    imageUrl: 'https://picsum.photos/400/300?random=2',
-  },
-];
-
 export default function RepositoryScreen() {
-  const [tripPlans] = useState(DUMMY_TRIP_PLANS);
-  const [isLoading] = useState(false);
+  const { tokens } = useAuth();
+  const [tripPlans, setTripPlans] = useState<SavedTripPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchTripPlans = async () => {
+    try {
+      setIsLoading(true);
+      const accessToken = tokens?.accessToken;
+      
+      console.log('=== 저장된 여행 계획 조회 시작 ===');
+      
+      const response = await getSavedTripPlans(accessToken);
+      
+      if (response.isSuccess && response.result) {
+        setTripPlans(response.result.tripPlanList);
+        console.log('조회된 여행 계획:', response.result.tripPlanList.length, '개');
+      } else {
+        setTripPlans([]);
+      }
+    } catch (error: any) {
+      console.log('여행 계획 목록 조회 실패:', error);
+      setTripPlans([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // 새로고침 시뮬레이션
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1000);
+    await fetchTripPlans();
+    setIsRefreshing(false);
   };
+
+  // 화면이 포커스될 때마다 데이터 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      fetchTripPlans();
+    }, [tokens])
+  );
 
   const handleCardPress = (tripPlanId: number) => {
     // TODO: 상세 페이지로 이동
