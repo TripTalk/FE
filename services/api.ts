@@ -777,4 +777,39 @@ export const getSavedTripPlans = async (
   return await response.json();
 };
 
+/**
+ * 여행 완료 상태 변경 API
+ * PATCH /api/trip-plan/{tripPlanId}/traveled
+ * 여행 계획의 완료 상태를 토글합니다.
+ */
+export const toggleTravelCompleted = async (
+  tripPlanId: number,
+  accessToken: string
+): Promise<{ isSuccess: boolean; code: string; message: string }> => {
+  console.log('=== 여행 완료 상태 변경 ===');
+  console.log('tripPlanId:', tripPlanId);
+  
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/trip-plan/${tripPlanId}/traveled`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.log('상태 변경 실패:', errorData);
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  console.log('상태 변경 성공:', result);
+  return result;
+};
+
 

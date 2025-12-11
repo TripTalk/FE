@@ -16,9 +16,10 @@ export interface TravelData {
 interface TravelCardProps {
   travel: TravelData;
   onPress?: () => void;
+  onToggleComplete?: () => void;
 }
 
-export function TravelCard({ travel, onPress }: TravelCardProps) {
+export function TravelCard({ travel, onPress, onToggleComplete }: TravelCardProps) {
   const formatDateRange = (start: string, end: string) => `${start} - ${end}`;
   const formatPrice = (price?: number, unit?: string) => price ? `${price.toLocaleString()}${unit || '원'}` : '';
 
@@ -58,7 +59,7 @@ export function TravelCard({ travel, onPress }: TravelCardProps) {
             <ThemedText style={styles.detailButtonText}>상세보기</ThemedText>
           </TouchableOpacity>
           {!isCompleted && (
-            <TouchableOpacity style={styles.completeButton}>
+            <TouchableOpacity style={styles.completeButton} onPress={onToggleComplete}>
               <ThemedText style={styles.completeButtonText}>여행 완료</ThemedText>
             </TouchableOpacity>
           )}

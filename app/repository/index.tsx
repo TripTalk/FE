@@ -1,11 +1,11 @@
 import { TravelCard } from '@/components/repository/TravelCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSavedTripPlans, SavedTripPlan } from '@/services/api';
+import { getSavedTripPlans, SavedTripPlan, toggleTravelCompleted } from '@/services/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RepositoryScreen() {
@@ -55,6 +55,27 @@ export default function RepositoryScreen() {
     console.log('Travel plan clicked:', tripPlanId);
   };
 
+  const handleToggleComplete = async (tripPlanId: number) => {
+    const accessToken = tokens?.accessToken;
+    if (!accessToken) {
+      Alert.alert('오류', '로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      console.log('여행 완료 상태 변경 시작:', tripPlanId);
+      await toggleTravelCompleted(tripPlanId, accessToken);
+      
+      // 상태 변경 후 목록 새로고침
+      await fetchTripPlans();
+      
+      Alert.alert('완료', '여행 상태가 변경되었습니다.');
+    } catch (error: any) {
+      console.log('상태 변경 실패:', error);
+      Alert.alert('오류', '상태 변경에 실패했습니다.');
+    }
+  };
+
   return (
     <>
       <Stack.Screen 
@@ -99,6 +120,7 @@ export default function RepositoryScreen() {
                     status: 'planned',
                   }}
                   onPress={() => handleCardPress(plan.tripPlanId)}
+                  onToggleComplete={() => handleToggleComplete(plan.tripPlanId)}
                 />
               ))}
             </View>
