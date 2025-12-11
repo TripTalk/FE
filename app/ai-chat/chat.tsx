@@ -211,6 +211,7 @@ export default function AIChatScreen() {
         text: replyText,
         isUser: false,
         timestamp: new Date(),
+        isSaveable: true,
       };
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
