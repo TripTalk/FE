@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { useTravelPlan } from '@/contexts/TravelPlanContext';
-import { router, Stack } from 'expo-router';
-import React, { useState } from 'react';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,8 +9,16 @@ const popularDestinations = ['제주도', '부산', '강릉', '도쿄', '오사�
 
 export default function PlanTripScreen() {
   const { updateTravelPlan } = useTravelPlan();
+  const params = useLocalSearchParams();
   const [whereInput, setWhereInput] = useState('');
   const [destination, setDestination] = useState('');
+
+  // URL 파라미터로 전달된 여행지 정보가 있으면 자동으로 채우기
+  useEffect(() => {
+    if (params.destination && typeof params.destination === 'string') {
+      setDestination(params.destination);
+    }
+  }, [params.destination]);
 
   const handleBackPress = () => {
     router.back();
