@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -20,22 +21,28 @@ type Badge = {
   description: string;
   acquired: boolean;
   acquiredDate?: string;
+  iconName: string;
+  iconColor?: string;
 };
 
 const badges: Badge[] = [
-  { id: '1', name: '첫 여행', description: '첫 번째 여행을 완료했습니다', acquired: true, acquiredDate: '2024.11.15' },
-  { id: '2', name: '사진 마니아', description: '여행 사진을 100장 업로드했습니다', acquired: true, acquiredDate: '2024.10.20' },
-  { id: '3', name: '탐험가', description: '10개 이상의 여행지를 방문했습니다', acquired: true, acquiredDate: '2024.09.05' },
-  { id: '4', name: '여행 전문가', description: '50개 이상의 여행을 완료했습니다', acquired: false },
-  { id: '5', name: '소셜 마스터', description: '친구 10명을 초대했습니다', acquired: false },
-  { id: '6', name: '계획왕', description: '완벽한 여행 계획을 10개 작성했습니다', acquired: false },
+  { id: '1', name: '첫 여행', description: '첫 번째 여행을 완료했습니다', acquired: true, iconName: 'star', iconColor: '#FFD700' },
+  { id: '2', name: '사진 마니아', description: '여행 사진을 100장 업로드했습니다', acquired: true, iconName: 'camera-alt', iconColor: '#4A90E2' },
+  { id: '3', name: '탐험가', description: '10개 이상의 여행지를 방문했습니다', acquired: true, iconName: 'explore', iconColor: '#50E3C2' },
+  { id: '4', name: '미획득', description: '아직 획득하지 못했습니다', acquired: false, iconName: 'lock-outline', iconColor: '#BDBDBD' },
+  { id: '5', name: '미획득', description: '아직 획득하지 못했습니다', acquired: false, iconName: 'lock-outline', iconColor: '#BDBDBD' },
+  { id: '6', name: '미획득', description: '아직 획득하지 못했습니다', acquired: false, iconName: 'lock-outline', iconColor: '#BDBDBD' },
 ];
 
 type BadgeItemProps = { badge: Badge };
 const BadgeItem = ({ badge }: BadgeItemProps) => (
   <View style={[styles.badgeCard, !badge.acquired && styles.badgeCardLocked]}>
-    <View style={[styles.badgeIconBackground, badge.acquired && styles.badgeIconAcquired]}>
-      <View style={styles.iconPlaceholder} />
+    <View style={[styles.badgeIconBackground, badge.acquired ? { backgroundColor: badge.iconColor } : null]}>
+      {badge.acquired ? (
+        <MaterialIcons name={badge.iconName as any} size={28} color="#FFFFFF" />
+      ) : (
+        <MaterialIcons name={badge.iconName as any} size={28} color={COLORS.iconPlaceholder} />
+      )}
     </View>
     <View style={styles.badgeInfo}>
       <ThemedText style={styles.badgeName}>{badge.name}</ThemedText>
@@ -87,6 +94,14 @@ export default function BadgesScreen() {
 }
 
 const styles = StyleSheet.create({
+    badgeIcon: {
+      fontSize: 28,
+      textAlign: 'center',
+      color: COLORS.textPrimary,
+    },
+    badgeIconLocked: {
+      color: COLORS.iconPlaceholder,
+    },
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
