@@ -682,6 +682,7 @@ export const saveTravelPlan = async (
 ): Promise<any> => {
   console.log('=== 여행 계획 저장 시작 ===');
   console.log('travel_id:', travelId);
+  console.log('accessToken:', accessToken ? 'Present' : 'Missing');
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -702,8 +703,15 @@ export const saveTravelPlan = async (
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    console.log('저장 실패:', errorData);
-    throw new Error(errorData.detail || `저장 실패: ${response.status}`);
+    console.error('저장 실패:', errorData);
+    console.error('Status:', response.status);
+    
+    // 401 Unauthorized 처리
+    if (response.status === 401) {
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    
+    throw new Error(errorData.detail || errorData.message || `저장 실패: ${response.status}`);
   }
 
   const result = await response.json();
@@ -712,7 +720,7 @@ export const saveTravelPlan = async (
   
   // FastAPI가 200으로 응답하더라도 실제 결과 확인
   if (result.success === false) {
-    console.log('Spring Boot 저장 실패:', result);
+    console.error('Spring Boot 저장 실패:', result);
     throw new Error(result.error || result.detail || '저장에 실패했습니다.');
   }
   

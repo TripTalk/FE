@@ -180,12 +180,24 @@ export default function AIChatScreen() {
       return;
     }
 
+    // 로그인 확인
+    const accessToken = tokens?.accessToken;
+    if (!accessToken) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: '여행 계획을 저장하려면 로그인이 필요합니다.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log('=== 여행 계획 저장 시작 ===');
       console.log('travel_id:', currentTravelId);
       
-      const accessToken = tokens?.accessToken;
       await saveTravelPlan(currentTravelId, accessToken);
 
       // 저장 완료 표시
@@ -203,10 +215,10 @@ export default function AIChatScreen() {
       };
       setMessages(prev => [...prev, savedMessage]);
     } catch (error: any) {
-      console.log('저장 실패:', error);
+      console.error('저장 실패:', error);
       const errorMessage: Message = {
         id: Date.now().toString(),
-        text: '저장에 실패했습니다. 다시 시도해주세요.',
+        text: `저장에 실패했습니다.\n${error.message || '다시 시도해주세요.'}`,
         isUser: false,
         timestamp: new Date(),
       };
