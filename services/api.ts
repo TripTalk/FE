@@ -672,51 +672,80 @@ export const getAccommodations = async (
 // =====================
 
 /**
- * 여행 계획 저장 API
- * POST /save-plan/{travel_id}
- * FastAPI가 자동으로 Spring Boot에 저장
+ * 여행 계획 저장 API (2단계)
+ * 1. FastAPI GET /travel-summary/{travel_id} → 데이터 조회
+ * 2. Spring Boot POST /api/trip-plan/from-fastapi → DB 저장
  */
 export const saveTravelPlan = async (
   travelId: string,
   accessToken?: string
 ): Promise<any> => {
-  console.log('=== 여행 계획 저장 시작 ===');
-  console.log('travel_id:', travelId);
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
+  try {
+    console.log('=== 1단계: FastAPI에서 여행 요약 조회 ===');
+    console.log('travel_id:', travelId);
+    
+    // 1단계: FastAPI에서 여행 요약 데이터 가져오기
+    const summaryResponse = await fetchWithTimeout(
+      `${AI_API_BASE_URL}/travel-summary/${encodeURIComponent(travelId)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+      DEFAULT_TIMEOUT_MS
+    );
 
-  const response = await fetchWithTimeout(
-    `${AI_API_BASE_URL}/save-plan/${encodeURIComponent(travelId)}`,
-    {
-      method: 'POST',
-      headers,
-    },
-    DEFAULT_TIMEOUT_MS
-  );
+    if (!summaryResponse.ok) {
+      const errorData = await summaryResponse.json().catch(() => ({}));
+      console.log('FastAPI 조회 실패:', errorData);
+      throw new Error(`여행 정보 조회 실패: ${summaryResponse.status}`);
+    }
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.log('저장 실패:', errorData);
-    throw new Error(errorData.detail || `저장 실패: ${response.status}`);
-  }
+    const summaryData = await summaryResponse.json();
+    console.log('FastAPI 응답 데이터:', JSON.stringify(summaryData, null, 2));
 
-  const result = await response.json();
-  console.log('=== 저장 성공 ===');
-  console.log('Result:', result);
-  
-  // FastAPI가 200으로 응답하더라도 실제 결과 확인
-  if (result.success === false) {
-    console.log('Spring Boot 저장 실패:', result);
-    throw new Error(result.error || result.detail || '저장에 실패했습니다.');
+    console.log('=== 2단계: Spring Boot에 저장 ===');
+    console.log('accessToken 존재:', !!accessToken);
+
+    // 2단계: Spring Boot에 저장
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    console.log('전송 URL:', `${AUTH_API_BASE_URL}/api/trip-plan/from-fastapi`);
+    console.log('전송 데이터:', JSON.stringify(summaryData, null, 2));
+
+    const saveResponse = await fetchWithTimeout(
+      `${AUTH_API_BASE_URL}/api/trip-plan/from-fastapi`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(summaryData),
+      },
+      DEFAULT_TIMEOUT_MS
+    );
+
+    if (!saveResponse.ok) {
+      const errorData = await saveResponse.json().catch(() => ({}));
+      console.log('Spring Boot 저장 실패:', saveResponse.status);
+      console.log('에러 상세:', JSON.stringify(errorData, null, 2));
+      throw new Error(errorData.message || `저장 실패: ${saveResponse.status}`);
+    }
+
+    const result = await saveResponse.json();
+    console.log('=== 저장 성공 ===');
+    console.log('Spring Boot 응답:', JSON.stringify(result, null, 2));
+    
+    return result;
+  } catch (error: any) {
+    console.log('저장 프로세스 실패:', error.message);
+    throw error;
   }
-  
-  return result;
 };
 
 // 저장된 여행 계획 목록 조회
