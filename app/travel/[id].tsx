@@ -1,4 +1,3 @@
-
 import { DaySchedule } from '@/components/repository/DaySchedule';
 import { ShareModal } from '@/components/repository/ShareModal';
 import { ThemedText } from '@/components/shared/themed-text';
@@ -8,8 +7,7 @@ import { getTripPlanDetail, SavedTripPlan } from '@/services/api';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-// ...existing code...
-  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
+
 
 
 export default function TravelDetailScreen() {
@@ -19,6 +17,7 @@ export default function TravelDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
 
   const handleShare = () => setShareModalVisible(true);
   const closeShareModal = () => setShareModalVisible(false);
@@ -133,41 +132,42 @@ export default function TravelDetailScreen() {
           <View style={styles.scheduleCardHeaderRow}>
             <ThemedText style={styles.scheduleCardTitle}>여행 일정</ThemedText>
           </View>
-          {travel.dailySchedules && travel.dailySchedules.length > 0 ? (
-            <>
-              <View style={styles.dayTabRow}>
-                {travel.dailySchedules.map((day, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.dayTab,
-                      selectedDayIdx === idx && styles.dayTabActive
-                    ]}
-                    onPress={() => {
-                      if (Array.isArray(travel.dailySchedules) && idx < travel.dailySchedules.length) {
-                        setSelectedDayIdx(idx);
-                      }
-                    }}
-                  >
-                    <ThemedText style={selectedDayIdx === idx ? styles.dayTabTextActive : styles.dayTabText}>
-                      {`Day${day.day || idx + 1}`}
-                    </ThemedText>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {Array.isArray(travel.dailySchedules) &&
-                travel.dailySchedules[selectedDayIdx] &&
-                travel.dailySchedules[selectedDayIdx].schedules ? (
-                <DaySchedule
-                  day={travel.dailySchedules[selectedDayIdx].day || selectedDayIdx + 1}
-                  date={travel.dailySchedules[selectedDayIdx].date}
-                  schedules={travel.dailySchedules[selectedDayIdx].schedules}
-                />
-              ) : null}
-            </>
-          ) : (
-            <ThemedText style={{ color: '#888', fontSize: 15, marginTop: 16 }}>등록된 일정이 없습니다.</ThemedText>
-          )}
+          <>
+            <View style={styles.dayTabRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ flexDirection: 'row', alignItems: 'center' }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {travel.dailySchedules && travel.dailySchedules.length > 0 ? (
+                  travel.dailySchedules.map((day, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={[
+                        styles.dayTab,
+                        selectedDayIdx === idx && styles.dayTabActive
+                      ]}
+                      onPress={() => setSelectedDayIdx(idx)}
+                    >
+                      <ThemedText style={selectedDayIdx === idx ? styles.dayTabTextActive : styles.dayTabText}>
+                        {`Day${day.day || idx + 1}`}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))
+                ) : null}
+              </ScrollView>
+            </View>
+            {travel.dailySchedules && travel.dailySchedules.length > 0 && travel.dailySchedules[selectedDayIdx] && travel.dailySchedules[selectedDayIdx].schedules ? (
+              <DaySchedule
+                day={travel.dailySchedules[selectedDayIdx].day || selectedDayIdx + 1}
+                date={travel.dailySchedules[selectedDayIdx].date}
+                schedules={travel.dailySchedules[selectedDayIdx].schedules}
+              />
+            ) : (
+              <ThemedText style={{ color: '#888', fontSize: 15, marginTop: 16 }}>등록된 일정이 없습니다.</ThemedText>
+            )}
+          </>
 
         </View>
 
@@ -365,7 +365,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  // ...existing code...
   flightIconBox: {
     width: 36,
     height: 36,
