@@ -369,6 +369,49 @@ export const sendFeedback = async (message: string): Promise<any> => {
 };
 
 /**
+ * 여행 계획 상세 조회 API
+ * GET /api/trip-plan/{tripPlanId}
+ */
+export const getTripPlanDetail = async (
+  tripPlanId: number,
+  accessToken?: string
+): Promise<TripPlanDetailResponse> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  console.log('=== getTripPlanDetail API 호출 시작 ===');
+  console.log('tripPlanId:', tripPlanId);
+  console.log('URL:', `${AUTH_API_BASE_URL}/api/trip-plan/${tripPlanId}`);
+  
+  const response = await fetchWithTimeout(
+    `${AUTH_API_BASE_URL}/api/trip-plan/${tripPlanId}`,
+    {
+      method: 'GET',
+      headers,
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  console.log('응답 상태:', response.status);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.log('상세 조회 실패:', errorData);
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log('API 응답 데이터:', JSON.stringify(data, null, 2));
+  
+  return data;
+};
+
+/**
  * 특정 여행 요약 정보 조회 API
  * GET /travel-summary/{travel_id}
  * 특정 여행의 요약 정보를 조회합니다.
@@ -482,6 +525,42 @@ export const getTripPlaces = async (
   }
 
   return await response.json();
+};
+
+/**
+ * FastAPI 여행 계획 상세 조회 API
+ * GET /travel-plan/{travel_id}
+ */
+export const getTripPlanDetailFromFastAPI = async (
+  travelId: string
+): Promise<SavedTripPlan> => {
+  console.log('=== getTripPlanDetailFromFastAPI 호출 시작 ===');
+  console.log('travelId:', travelId);
+  console.log('URL:', `${AI_API_BASE_URL}/travel-plan/${encodeURIComponent(travelId)}`);
+  
+  const response = await fetchWithTimeout(
+    `${AI_API_BASE_URL}/travel-plan/${encodeURIComponent(travelId)}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+    DEFAULT_TIMEOUT_MS
+  );
+
+  console.log('응답 상태:', response.status);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.log('FastAPI 상세 조회 실패:', errorData);
+    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log('FastAPI 응답 데이터:', JSON.stringify(data, null, 2));
+  
+  return data;
 };
 
 /**
@@ -726,7 +805,8 @@ export const saveTravelPlan = async (
 
 // 저장된 여행 계획 목록 조회
 export interface SavedTripPlan {
-  tripPlanId: number;
+  tripPlanId?: number;
+  id?: number;
   title: string;
   destination: string;
   departure: string;
@@ -735,7 +815,32 @@ export interface SavedTripPlan {
   companions: string;
   budget: string;
   travelStyles: string[];
+  status: 'PLANNED' | 'TRAVELED';
   imageUrl?: string;
+  transportations?: Array<{
+    origin: string;
+    destination: string;
+    name: string;
+    price: number;
+  }>;
+  accommodations?: Array<{
+    name: string;
+    address: string;
+    pricePerNight: number;
+  }>;
+  dailySchedules?: Array<{
+    day: number;
+    date: string;
+    schedules: Array<{
+      orderIndex: number;
+      time: string;
+      title: string;
+      description: string;
+    }>;
+  }>;
+  highlights?: Array<{
+    content: string;
+  }>;
 }
 
 export interface SavedTripPlansResponse {
@@ -747,12 +852,20 @@ export interface SavedTripPlansResponse {
   };
 }
 
+export interface TripPlanDetailResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  result: SavedTripPlan;
+}
+
 /**
  * 저장된 여행 계획 목록 조회 API
- * GET /api/trip-plan/archive
+ * GET /api/trip-plan/archive?status=PLANNED|TRAVELED
  */
 export const getSavedTripPlans = async (
-  accessToken?: string
+  accessToken?: string,
+  status?: 'PLANNED' | 'TRAVELED'
 ): Promise<SavedTripPlansResponse> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -762,10 +875,18 @@ export const getSavedTripPlans = async (
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  console.log('=== 저장된 여행 계획 목록 조회 ===');
+  // status 파라미터가 없으면 PLANNED를 기본값으로
+  const statusParam = status || 'PLANNED';
+  const url = `${AUTH_API_BASE_URL}/api/trip-plan/archive?status=${statusParam}`;
+
+  console.log('=== getSavedTripPlans API 호출 시작 ===');
+  console.log('URL:', url);
+  console.log('accessToken 존재:', !!accessToken);
+  console.log('status:', statusParam);
+  console.log('전송 헤더:', JSON.stringify(headers, null, 2));
   
   const response = await fetchWithTimeout(
-    `${AUTH_API_BASE_URL}/api/trip-plan/archive`,
+    url,
     {
       method: 'GET',
       headers,
@@ -773,13 +894,19 @@ export const getSavedTripPlans = async (
     DEFAULT_TIMEOUT_MS
   );
 
+  console.log('응답 상태:', response.status);
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     console.log('목록 조회 실패:', errorData);
     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  console.log('API 응답 데이터:', JSON.stringify(data, null, 2));
+  
+  return data;
+
 };
 
 /**

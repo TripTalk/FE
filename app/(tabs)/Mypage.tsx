@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserInfo, logout, UserInfo } from '@/services/api';
+import { getSavedTripPlans, getUserInfo, logout, UserInfo } from '@/services/api';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -89,6 +89,8 @@ export default function MyPageScreen() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [plannedCount, setPlannedCount] = useState(0);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -106,6 +108,25 @@ export default function MyPageScreen() {
         console.log('nickname:', response.result?.nickname);
         console.log('email:', response.result?.email);
         setUserInfo(response.result);
+
+        // 여행 계획 개수 조회
+        try {
+          const [completedResponse, plannedResponse] = await Promise.all([
+            getSavedTripPlans(tokens.accessToken, 'TRAVELED'),
+            getSavedTripPlans(tokens.accessToken, 'PLANNED'),
+          ]);
+
+          const completedTrips = completedResponse.result?.tripPlanList || [];
+          const plannedTrips = plannedResponse.result?.tripPlanList || [];
+
+          setCompletedCount(completedTrips.length);
+          setPlannedCount(plannedTrips.length);
+
+          console.log('완료한 여행:', completedTrips.length, '개');
+          console.log('계획 중인 여행:', plannedTrips.length, '개');
+        } catch (tripError) {
+          console.log('여행 계획 개수 조회 오류:', tripError);
+        }
       } catch (error) {
         console.log('사용자 정보 조회 오류:', error);
       } finally {
@@ -176,13 +197,13 @@ export default function MyPageScreen() {
 
           <View style={styles.statsContainer}>
             <StatItem 
-              value={String(userInfo?.completedTravelCount || 0)}
+              value={String(completedCount)}
               label="완료한 여행" 
               color={COLORS.stat1}
               onPress={() => router.push('/(tabs)/explore?tab=completed')}
             />
             <StatItem 
-              value={String(userInfo?.plannedTravelCount || 0)}
+              value={String(plannedCount)}
               label="계획 중인 여행" 
               color={COLORS.stat2}
               onPress={() => router.push('/(tabs)/explore?tab=planned')}

@@ -4,8 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getSavedTripPlans, SavedTripPlan, toggleTravelCompleted } from '@/services/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { Stack } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Button, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RepositoryScreen() {
@@ -59,6 +59,12 @@ export default function RepositoryScreen() {
     }, [tokens])
   );
 
+  // 컴포넌트 마운트 시에도 호출
+  useEffect(() => {
+    console.log('=== 저장소 페이지 마운트됨 ===');
+    fetchTripPlans();
+  }, []);
+
   const handleCardPress = (tripPlanId: number) => {
     // TODO: 상세 페이지로 이동
     console.log('Travel plan clicked:', tripPlanId);
@@ -87,14 +93,17 @@ export default function RepositoryScreen() {
 
   return (
     <>
-      <Stack.Screen 
-        options={{
-          title: '보관함',
-          headerShown: true,
-        }}
-      />
       <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={{ padding: 16, backgroundColor: '#FFF' }}>
+          <Button title="강제 새로고침 (디버깅용)" onPress={fetchTripPlans} color="#4ECDC4" />
+        </View>
         <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          }
+        >ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -127,6 +136,8 @@ export default function RepositoryScreen() {
                     price: plan.budget ? parseInt(plan.budget.replace(/[^0-9]/g, '')) : undefined,
                     priceUnit: '만원',
                     status: 'planned',
+                    transportations: plan.transportations,
+                    accommodations: plan.accommodations,
                   }}
                   onPress={() => handleCardPress(plan.tripPlanId)}
                   onToggleComplete={() => handleToggleComplete(plan.tripPlanId)}
