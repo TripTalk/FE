@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 export interface ScheduleItem {
   time: string;
   title: string;
-  location?: string;
+  description?: string;
 }
 
 interface DayScheduleProps {
@@ -32,20 +32,38 @@ export function DaySchedule({ day, date, schedules }: DayScheduleProps) {
         {/* 세로선 */}
         <View style={styles.timelineLine} />
         <View style={styles.timelineContent}>
-          {schedules.map((schedule, index) => (
-            <View key={index} style={styles.scheduleCardRow}>
-              <View style={styles.timelineDot} />
-              <View style={styles.scheduleCard}>
-                <View style={styles.scheduleCardHeader}>
-                  <ThemedText style={styles.scheduleTime}>{schedule.time}</ThemedText>
-                  {schedule.location && (
-                    <ThemedText style={styles.scheduleLocation}>{schedule.location}</ThemedText>
-                  )}
+          {schedules.map((schedule, index) => {
+            // format time to HH:MM (drop seconds) — supports 'HH:MM:SS' or ISO-like strings
+            let formattedTime = schedule.time || '';
+            try {
+              if (formattedTime.includes('T')) {
+                const d = new Date(formattedTime);
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mm = String(d.getMinutes()).padStart(2, '0');
+                formattedTime = `${hh}:${mm}`;
+              } else if (formattedTime.includes(':')) {
+                const parts = formattedTime.split(':');
+                if (parts.length >= 2) formattedTime = `${parts[0]}:${parts[1]}`;
+              }
+            } catch (e) {
+              // fallback to original string on parse error
+            }
+
+            return (
+              <View key={index} style={styles.scheduleCardRow}>
+                <View style={styles.timelineDot} />
+                <View style={styles.scheduleCard}>
+                  <View style={styles.scheduleCardHeader}>
+                    <ThemedText style={styles.scheduleTime}>{formattedTime}</ThemedText>
+                    {schedule.description && (
+                      <ThemedText style={styles.scheduleLocation}>{schedule.description}</ThemedText>
+                    )}
+                  </View>
+                  <ThemedText style={styles.scheduleTitle}>{schedule.title}</ThemedText>
                 </View>
-                <ThemedText style={styles.scheduleTitle}>{schedule.title}</ThemedText>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </View>
     </View>
