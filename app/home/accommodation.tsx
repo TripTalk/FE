@@ -1,41 +1,45 @@
 import { AccommodationCard } from '@/components/home/AccommodationCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { router, Stack } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeOut,
-  Layout,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
+    Easing,
+    FadeIn,
+    FadeOut,
+    Layout,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// 더미 데이터
-const DUMMY_FLIGHTS = [
-  { id: 1, departure: '서울', destination: '제주', price: 89000, imgUrl: 'https://picsum.photos/400/300?random=1' },
-  { id: 2, departure: '서울', destination: '부산', price: 52000, imgUrl: 'https://picsum.photos/400/300?random=2' },
-  { id: 3, departure: '서울', destination: '오사카', price: 156000, imgUrl: 'https://picsum.photos/400/300?random=3' },
-  { id: 4, departure: '서울', destination: '도쿄', price: 189000, imgUrl: 'https://picsum.photos/400/300?random=4' },
-];
-
-const DUMMY_ACCOMMODATIONS = [
-  { id: 1, name: '제주 호텔', location: '제주시', price: 120000, imgUrl: 'https://picsum.photos/400/300?random=5' },
-  { id: 2, name: '부산 리조트', location: '해운대', price: 150000, imgUrl: 'https://picsum.photos/400/300?random=6' },
-  { id: 3, name: '서울 게스트하우스', location: '명동', price: 65000, imgUrl: 'https://picsum.photos/400/300?random=7' },
-  { id: 4, name: '강릉 펜션', location: '경포대', price: 90000, imgUrl: 'https://picsum.photos/400/300?random=8' },
-];
+// 실제 API 연동
+async function fetchFlights() {
+  const res = await fetch('/api/flights');
+  if (!res.ok) return [];
+  return await res.json();
+}
+async function fetchAccommodations() {
+  const res = await fetch('/api/accommodations');
+  if (!res.ok) return [];
+  return await res.json();
+}
 
 export default function AccommodationScreen() {
   const [activeTab, setActiveTab] = useState<'항공' | '숙박'>('항공');
-  const [flights] = useState(DUMMY_FLIGHTS);
-  const [accommodations] = useState(DUMMY_ACCOMMODATIONS);
-  
+  const [flights, setFlights] = useState<any[]>([]);
+  const [accommodations, setAccommodations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchFlights().then(setFlights).finally(() => setLoading(false));
+    fetchAccommodations().then(setAccommodations);
+  }, []);
+
   // 슬라이딩 인디케이터 애니메이션
   const indicatorPosition = useSharedValue(0);
   const TAB_WIDTH = (SCREEN_WIDTH - 32 - 8) / 2; // padding과 gap 고려
@@ -58,7 +62,7 @@ export default function AccommodationScreen() {
     router.back();
   };
 
-  const renderFlightGrid = (items: typeof DUMMY_FLIGHTS) => {
+  const renderFlightGrid = (items: typeof flights) => {
     const rows = [];
     for (let i = 0; i < items.length; i += 2) {
       const row = items.slice(i, i + 2);
@@ -80,7 +84,7 @@ export default function AccommodationScreen() {
     return rows;
   };
 
-  const renderAccommodationGrid = (items: typeof DUMMY_ACCOMMODATIONS) => {
+  const renderAccommodationGrid = (items: typeof accommodations) => {
     const rows = [];
     for (let i = 0; i < items.length; i += 2) {
       const row = items.slice(i, i + 2);
