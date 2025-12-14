@@ -166,12 +166,12 @@ export default function ExploreScreen() {
             </ThemedText>
           </ThemedView>
         ) : (
-          filteredTravels.map((travel) => (
+          filteredTravels.filter(Boolean).map((travel) => (
             <TravelCard
-              key={travel.id}
-              travel={travel}
-              onPress={() => handleCardPress(travel.id)}
-              onToggleComplete={() => handleToggleComplete(parseInt(travel.id))}
+              key={travel!.id}
+              travel={travel!}
+              onPress={() => handleCardPress(travel!.id)}
+              onToggleComplete={() => handleToggleComplete(parseInt(travel!.id))}
             />
           ))
         )}
