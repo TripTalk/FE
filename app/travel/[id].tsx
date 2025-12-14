@@ -80,8 +80,8 @@ export default function TravelDetailScreen() {
   }
 
   return (
-    <SafeAreaView>
-      <ScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7FAFA' }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }}>
         {/* 여행 요약 카드 */}
         <ThemedView style={[styles.cardInfoBox, { padding: 0, overflow: 'hidden' }]}> 
           {/* 대표 이미지 */}

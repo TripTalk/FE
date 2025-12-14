@@ -3,7 +3,6 @@ import { ThemedText } from '@/components/shared/themed-text';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSavedTripPlans, SavedTripPlan, toggleTravelCompleted } from '@/services/api';
 import { useFocusEffect } from '@react-navigation/native';
-import { Stack } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -98,12 +97,6 @@ export default function RepositoryScreen() {
           <Button title="강제 새로고침 (디버깅용)" onPress={fetchTripPlans} color="#4ECDC4" />
         </View>
         <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-          }
-        >ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
