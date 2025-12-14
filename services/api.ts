@@ -672,43 +672,20 @@ export const getAccommodations = async (
 // =====================
 
 /**
- * 여행 계획 저장 API (2단계)
- * 1. FastAPI GET /travel-summary/{travel_id} → 데이터 조회
- * 2. Spring Boot POST /api/trip-plan/from-fastapi → DB 저장
+ * 여행 계획 저장 API
+ * FastAPI가 내부적으로 Spring Boot에 데이터를 전송하고 저장
+ * POST /save-plan/{travel_id}
  */
 export const saveTravelPlan = async (
   travelId: string,
   accessToken?: string
 ): Promise<any> => {
   try {
-    console.log('=== 1단계: FastAPI에서 여행 요약 조회 ===');
+    console.log('=== FastAPI를 통한 여행 계획 저장 ===');
     console.log('travel_id:', travelId);
-    
-    // 1단계: FastAPI에서 여행 요약 데이터 가져오기
-    const summaryResponse = await fetchWithTimeout(
-      `${AI_API_BASE_URL}/travel-summary/${encodeURIComponent(travelId)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-      DEFAULT_TIMEOUT_MS
-    );
-
-    if (!summaryResponse.ok) {
-      const errorData = await summaryResponse.json().catch(() => ({}));
-      console.log('FastAPI 조회 실패:', errorData);
-      throw new Error(`여행 정보 조회 실패: ${summaryResponse.status}`);
-    }
-
-    const summaryData = await summaryResponse.json();
-    console.log('FastAPI 응답 데이터:', JSON.stringify(summaryData, null, 2));
-
-    console.log('=== 2단계: Spring Boot에 저장 ===');
     console.log('accessToken 존재:', !!accessToken);
-
-    // 2단계: Spring Boot에 저장
+    console.log('accessToken 값:', accessToken);
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -717,29 +694,28 @@ export const saveTravelPlan = async (
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    console.log('전송 URL:', `${AUTH_API_BASE_URL}/api/trip-plan/from-fastapi`);
-    console.log('전송 데이터:', JSON.stringify(summaryData, null, 2));
+    console.log('전송 헤더:', JSON.stringify(headers, null, 2));
+    console.log('전송 URL:', `${AI_API_BASE_URL}/save-plan/${encodeURIComponent(travelId)}`);
 
-    const saveResponse = await fetchWithTimeout(
-      `${AUTH_API_BASE_URL}/api/trip-plan/from-fastapi`,
+    const response = await fetchWithTimeout(
+      `${AI_API_BASE_URL}/save-plan/${encodeURIComponent(travelId)}`,
       {
         method: 'POST',
         headers,
-        body: JSON.stringify(summaryData),
       },
       DEFAULT_TIMEOUT_MS
     );
 
-    if (!saveResponse.ok) {
-      const errorData = await saveResponse.json().catch(() => ({}));
-      console.log('Spring Boot 저장 실패:', saveResponse.status);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.log('저장 실패:', response.status);
       console.log('에러 상세:', JSON.stringify(errorData, null, 2));
-      throw new Error(errorData.message || `저장 실패: ${saveResponse.status}`);
+      throw new Error(errorData.detail || errorData.message || `저장 실패: ${response.status}`);
     }
 
-    const result = await saveResponse.json();
+    const result = await response.json();
     console.log('=== 저장 성공 ===');
-    console.log('Spring Boot 응답:', JSON.stringify(result, null, 2));
+    console.log('응답:', JSON.stringify(result, null, 2));
     
     return result;
   } catch (error: any) {

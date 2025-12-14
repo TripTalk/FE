@@ -15,25 +15,32 @@ export default function RepositoryScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchTripPlans = async () => {
+    console.log('=== fetchTripPlans 함수 호출됨 ===');
     try {
       setIsLoading(true);
       const accessToken = tokens?.accessToken;
       
       console.log('=== 저장된 여행 계획 조회 시작 ===');
+      console.log('accessToken 존재:', !!accessToken);
       
       const response = await getSavedTripPlans(accessToken);
+      
+      console.log('API 응답:', JSON.stringify(response, null, 2));
       
       if (response.isSuccess && response.result) {
         setTripPlans(response.result.tripPlanList);
         console.log('조회된 여행 계획:', response.result.tripPlanList.length, '개');
       } else {
+        console.log('API 응답 성공하지 않음 또는 result 없음');
         setTripPlans([]);
       }
     } catch (error: any) {
-      console.log('여행 계획 목록 조회 실패:', error);
+      console.log('여행 계획 목록 조회 실패:', error.message);
+      console.log('에러 상세:', error);
       setTripPlans([]);
     } finally {
       setIsLoading(false);
+      console.log('=== fetchTripPlans 완료 ===');
     }
   };
 
@@ -46,6 +53,8 @@ export default function RepositoryScreen() {
   // 화면이 포커스될 때마다 데이터 새로고침
   useFocusEffect(
     useCallback(() => {
+      console.log('=== 저장소 화면 포커스됨 ===');
+      console.log('tokens 존재:', !!tokens);
       fetchTripPlans();
     }, [tokens])
   );
