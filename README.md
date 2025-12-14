@@ -1,8 +1,73 @@
 # 🌍 TripTalk
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/385c2e64-02f5-45a6-8868-732c572acc85" />
+
+## 👥 팀 정보
+<div align="center">
+  <table>
+  <tr>
+    <!-- 사진 + 이름 행 -->
+    <td align="center">
+      <a href="https://github.com/Yujin1219">
+        <img
+          width="170"
+          src="https://avatars.githubusercontent.com/Yujin1219"
+          alt="유진"
+        />
+        <br />
+        유진
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/jooyoi">
+        <img
+          width="170"
+          src="https://avatars.githubusercontent.com/jooyoi"
+          alt="홍주영"
+        />
+        <br />
+        홍주영
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/ys1217-gg">
+        <img
+          width="170"
+          src="https://avatars.githubusercontent.com/ys1217-gg"
+          alt="황요성"
+        />
+        <br />
+        황요성
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/davidcho0701">
+        <img
+          width="170"
+          src="https://avatars.githubusercontent.com/davidcho0701"
+          alt="조성빈"
+        />
+        <br />
+        조성빈
+      </a>
+    </td>
+  </tr>
+
+  <!-- 역할 행 -->
+  <tr>
+    <td align="center"><b>Lead, BE</b></td>
+    <td align="center"><b>AI</b></td>
+    <td align="center"><b>FE</b></td>
+    <td align="center"><b>FE</b></td>
+  </tr>
+</table>
+
+</div>
+
 
 ## 📝 프론트엔드 개요 및 기술 요약
 
 ### 개요
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b4468b0b-ea93-4951-ad74-1953a22be098" />
 
 - TripTalk는 React Native와 Expo Router 기반의 여행 계획·공유 모바일 앱입니다.
 - 사용자는 여행 계획 생성, AI 여행 플래너, 여행 기록 관리, 친구와의 정보 공유 등 다양한 기능을 이용할 수 있습니다.
@@ -44,12 +109,14 @@ TripTalk는 React Native와 Expo Router로 개발된 여행 관리 및 공유 �
 - 인기 여행지 소개 (제주도, 부산, 파리, 뉴욕 등)
 - 카테고리별 여행 상품 탐색
 - AI 여행 플래너 바로가기
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/68fe8298-bf7f-48af-8d4e-032b4d3babed" />
 
 ### 🤖 **AI 여행 플래너**
 
 - 5단계 여행 계획 설정 (동행자, 출발지/목적지, 날짜, 스타일, 예산)
 - AI 챗봇과 대화형 여행 일정 생성
 - 맞춤형 여행 추천
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a951ba00-18d7-4da0-ad47-86a9f17c41e3" />
 
 ### 📁 **저장소**
 
@@ -57,13 +124,7 @@ TripTalk는 React Native와 Expo Router로 개발된 여행 관리 및 공유 �
 - **여행 완료**: 완료된 여행 기록 보관
 - 여행 카드 형태의 직관적인 UI
 - 상세보기를 통한 일정 및 가격 정보 확인
-
-### 👤 **마이페이지**
-
-- 개인 프로필 관리
-- 여행 통계 (완료한 여행, 계획 중인 여행, 적립 포인트)
-- 뱃지 시스템 (첫 여행, 시간 마니아, 한번가 등)
-- 계정 설정 및 개인정보 변경
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/30622c1b-8bbf-47ea-9d20-bd8407af553b" />
 
 ### 🔄 **여행 상세 화면**
 
@@ -78,6 +139,41 @@ TripTalk는 React Native와 Expo Router로 개발된 여행 관리 및 공유 �
 - 링크 공유하기
 - 카카오톡으로 공유
 - 여행 정보 미리보기 카드
+
+
+### ✈️ 항공권 조회
+- **인기 노선 자동 조회**
+  - 국내: 김포↔제주, 김포↔부산
+  - 일본: 인천↔도쿄/오사카/후쿠오카 등
+  - 기타: 방콕, 싱가포르, 홍콩, 뉴욕, 파리 등 20개 노선
+- **커서 기반 무한스크롤** (페이지 사이즈 10개)
+
+### 🏨 숙소 추천
+- **추천 숙소 조회**
+  - 18개 도시 × 3개 호텔
+- **다양한 체크인/체크아웃 날짜**
+- **커서 기반 무한스크롤** 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/99fcae83-5400-473b-ab52-bfaaa90d0de3" />
+
+### 🌴 여행지 추천
+- **테마별 조회**
+  - NATURE (자연)
+  - SEA (바다)
+  - CULTURE (문화)
+  - HEALING (힐링)
+  - HISTORY (역사)
+- **커서 기반 무한스크롤** (페이지 사이즈 10개)
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7256a998-fe15-4baa-b0aa-ae38d60071bb" />
+
+### 👤 **마이페이지**
+
+- 개인 프로필 관리
+- 여행 통계 (완료한 여행, 계획 중인 여행, 적립 포인트)
+- 뱃지 시스템 (첫 여행, 시간 마니아, 한번가 등)
+- 계정 설정 및 개인정보 변경
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/3d24365e-898b-4e1f-8f2e-8626720090c7" />
+
+
 
 ## 🛠️ 기술 스택
 
