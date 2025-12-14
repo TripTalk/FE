@@ -1,82 +1,79 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TabSelector } from '@/components/repository/TabSelector';
-import { TravelCard, TravelData } from '@/components/repository/TravelCard';
+import { TravelCard } from '@/components/repository/TravelCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
-
-// 샘플 데이터
-const sampleTravels: TravelData[] = [
-  // 계획 완료 (예정된 여행들)
-  {
-    id: '1',
-    title: '제주도 3박 4일 힐링 여행',
-    startDate: '2024.12.15',
-    endDate: '2024.12.18',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    price: 450000,
-    priceUnit: '원',
-    status: 'planned'
-  },
-  {
-    id: '2',
-    title: '일본 도쿄 2박 3일',
-    startDate: '2024.12.22',
-    endDate: '2024.12.25',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400',
-    price: 680000,
-    priceUnit: '원',
-    status: 'planned'
-  },
-  {
-    id: '3',
-    title: '강릉 바다여행 1박 2일',
-    startDate: '2025.01.05',
-    endDate: '2025.01.06',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    price: 280000,
-    priceUnit: '원',
-    status: 'planned'
-  },
-  // 여행 완료 (완료된 여행들)
-  {
-    id: '4',
-    title: '부산 맛집 투어 여행',
-    startDate: '2024.10.20',
-    endDate: '2024.10.22',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    price: 320000,
-    priceUnit: '원',
-    status: 'planned'
-  },
-  {
-    id: '5',
-    title: '경주 역사탐방 2박 3일',
-    startDate: '2024.09.15',
-    endDate: '2024.09.17',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    price: 380000,
-    priceUnit: '원',
-    status: 'completed'
-  },
-  {
-    id: '6',
-    title: '전주 한옥마을 당일치기',
-    startDate: '2024.08.12',
-    endDate: '2024.08.12',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400',
-    price: 150000,
-    priceUnit: '원',
-    status: 'completed'
-  },
-];
+import { useAuth } from '@/contexts/AuthContext';
+import { getSavedTripPlans, SavedTripPlan, toggleTravelCompleted } from '@/services/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ExploreScreen() {
+  const { tokens } = useAuth();
   const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState<'계획 완료' | '여행 완료'>('계획 완료');
+  const [tripPlans, setTripPlans] = useState<SavedTripPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchTripPlans = async () => {
+    console.log('=== explore.tsx: fetchTripPlans 호출 ===');
+    console.log('activeTab:', activeTab);
+    try {
+      setIsLoading(true);
+      const accessToken = tokens?.accessToken;
+      
+      console.log('accessToken 존재:', !!accessToken);
+      
+      // 탭에 따라 status 결정
+      const status = activeTab === '계획 완료' ? 'PLANNED' : 'TRAVELED';
+      
+      const response = await getSavedTripPlans(accessToken, status);
+      
+      console.log('API 응답:', JSON.stringify(response, null, 2));
+      
+      if (response.isSuccess && response.result) {
+        console.log('원본 데이터:', JSON.stringify(response.result.tripPlanList, null, 2));
+        setTripPlans(response.result.tripPlanList);
+        console.log('조회된 여행 계획:', response.result.tripPlanList.length, '개');
+      } else {
+        console.log('API 응답 성공하지 않음');
+        setTripPlans([]);
+      }
+    } catch (error: any) {
+      console.log('여행 계획 목록 조회 실패:', error.message);
+      setTripPlans([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchTripPlans();
+    setIsRefreshing(false);
+  };
+
+  // 화면 포커스 시 데이터 로드
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('=== explore 화면 포커스됨 ===');
+      fetchTripPlans();
+    }, [tokens, activeTab])
+  );
+
+  // 초기 로드
+  useEffect(() => {
+    fetchTripPlans();
+  }, []);
+
+  // 탭 변경 시 데이터 새로고침
+  useEffect(() => {
+    fetchTripPlans();
+  }, [activeTab]);
 
   useEffect(() => {
     if (params.tab === 'completed') {
@@ -86,12 +83,56 @@ export default function ExploreScreen() {
     }
   }, [params.tab]);
 
-  const filteredTravels = sampleTravels.filter(travel => 
-    activeTab === '계획 완료' ? travel.status === 'planned' : travel.status === 'completed'
-  );
+  const filteredTravels = tripPlans
+    .filter(plan => 
+      activeTab === '계획 완료' ? plan.status === 'PLANNED' : plan.status === 'TRAVELED'
+    )
+    .map(plan => {
+      // tripPlanId 또는 id를 사용
+      const planId = plan.tripPlanId || plan.id;
+      if (!planId) {
+        console.warn('여행 계획 ID가 없습니다:', plan);
+        return null;
+      }
+      
+      return {
+        id: planId.toString(),
+        title: plan.title,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        image: plan.imageUrl || 'https://via.placeholder.com/400x200',
+        price: plan.budget ? parseInt(plan.budget.replace(/[^0-9]/g, '')) : undefined,
+        priceUnit: '원',
+        status: plan.status === 'PLANNED' ? 'planned' as const : 'completed' as const,
+        transportations: plan.transportations,
+        accommodations: plan.accommodations,
+      };
+    })
+    .filter(Boolean); // null 제거
 
   const handleCardPress = (travelId: string) => {
     router.push(`/travel/${travelId}`);
+  };
+
+  const handleToggleComplete = async (tripPlanId: number) => {
+    const accessToken = tokens?.accessToken;
+    if (!accessToken) {
+      Alert.alert('오류', '로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      console.log('여행 완료 상태 변경 시작:', tripPlanId);
+      await toggleTravelCompleted(tripPlanId, accessToken);
+      
+      Alert.alert('완료', '여행 상태가 변경되었습니다.');
+      
+      // 상태 변경 후 데이터 새로고침
+      await fetchTripPlans();
+    } catch (error: any) {
+      console.log('상태 변경 실패:', error);
+      Alert.alert('오류', '상태 변경에 실패했습니다.');
+    }
   };
 
   return (
@@ -106,19 +147,31 @@ export default function ExploreScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
       >
-        {filteredTravels.length === 0 ? (
+        {isLoading ? (
+          <ThemedView style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4ECDC4" />
+            <ThemedText style={styles.loadingText}>여행 계획을 불러오는 중...</ThemedText>
+          </ThemedView>
+        ) : filteredTravels.length === 0 ? (
           <ThemedView style={styles.emptyState}>
             <ThemedText style={styles.emptyText}>
               {activeTab === '계획 완료' ? '계획된 여행이 없습니다' : '완료된 여행이 없습니다'}
             </ThemedText>
+            <ThemedText style={styles.emptySubtext}>
+              AI와 대화하여 여행 계획을 만들어보세요!
+            </ThemedText>
           </ThemedView>
         ) : (
-          filteredTravels.map((travel) => (
+          filteredTravels.filter(Boolean).map((travel) => (
             <TravelCard
-              key={travel.id}
-              travel={travel}
-              onPress={() => handleCardPress(travel.id)}
+              key={travel!.id}
+              travel={travel!}
+              onPress={() => handleCardPress(travel!.id)}
+              onToggleComplete={() => handleToggleComplete(parseInt(travel!.id))}
             />
           ))
         )}
@@ -148,6 +201,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  loadingContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666666',
+  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -157,6 +220,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#666666',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999999',
     textAlign: 'center',
   },
 });

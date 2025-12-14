@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import React from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,8 +13,32 @@ import { AIBanner } from '@/components/home/AIBanner';
 import { DestinationCard } from '@/components/home/DestinationCard';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
+import { useAuth } from '@/contexts/AuthContext';
+import { getTripPlaces, TripPlace } from '@/services/api';
 
 export default function HomeScreen() {
+  const { tokens } = useAuth();
+  const [popularDestinations, setPopularDestinations] = React.useState<TripPlace[]>([]);
+  const [isLoadingDest, setIsLoadingDest] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchPopular = async () => {
+      setIsLoadingDest(true);
+      try {
+        const accessToken = tokens?.accessToken;
+        const response = await getTripPlaces(undefined, null, accessToken);
+        if (response.isSuccess && response.result) {
+          setPopularDestinations(response.result.tripPlaceList.slice(0, 10)); // 최대 10개만
+        }
+      } catch (e) {
+        setPopularDestinations([]);
+      } finally {
+        setIsLoadingDest(false);
+      }
+    };
+    fetchPopular();
+  }, [tokens]);
+
   const handleTravelPress = (id: string) => {
     router.push(`/travel/${id}`);
   };
@@ -57,24 +81,24 @@ export default function HomeScreen() {
               <ThemedText style={styles.arrowText}>{'>'}</ThemedText>
             </View>
           </TouchableOpacity>
-          
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScrollContainer}
           >
-            <DestinationCard
-              title="제주도"
-              subtitle="한라산과 에메랄드빛 바다가 아름다운 힐링 여행지"
-              imageUrl="https://picsum.photos/400/200?random=1"
-              onPress={() => handleTravelPress('1')}
-            />
-            <DestinationCard
-              title="부산"
-              subtitle="해운대 해변과 감천 마을의 낭만"
-              imageUrl="https://picsum.photos/400/200?random=2"
-              onPress={() => handleTravelPress('2')}
-            />
+            {isLoadingDest ? (
+              <View style={{ padding: 24 }}><ThemedText>로딩 중...</ThemedText></View>
+            ) : (
+              popularDestinations.map((dest) => (
+                <DestinationCard
+                  key={dest.id}
+                  title={dest.region}
+                  subtitle={dest.description}
+                  imageUrl={dest.imgUrl}
+                  onPress={() => handleTravelPress(dest.id.toString())}
+                />
+              ))
+            )}
           </ScrollView>
         </View>
 
@@ -141,7 +165,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA', // 홈화면 배경색과 동일하게
   },
   appTitle: {
     fontSize: 24,

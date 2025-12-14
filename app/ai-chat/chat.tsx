@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/shared/themed-text';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTravelPlan } from '@/contexts/TravelPlanContext';
-import { createTravelPlan, sendFeedback } from '@/services/api';
+import { createTravelPlan, saveTravelPlan, sendFeedback } from '@/services/api';
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -48,6 +49,7 @@ const truncateText = (text: string): string => {
 
 export default function AIChatScreen() {
   const { travelPlan } = useTravelPlan();
+  const { tokens } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -61,6 +63,7 @@ export default function AIChatScreen() {
   const [isPlanCreated, setIsPlanCreated] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showHomeModal, setShowHomeModal] = useState(false);
+  const [currentTravelId, setCurrentTravelId] = useState<string>('');
   const scrollViewRef = useRef<ScrollView>(null);
 
   // 날짜 형식 변환 (YYYY-MM-DD -> YYYY.MM.DD)
@@ -93,6 +96,9 @@ export default function AIChatScreen() {
         console.log('여행 계획 생성 응답:', response);
 
         const planText = response.plan || JSON.stringify(response);
+        const travelId = response.travel_id || '';
+        setCurrentTravelId(travelId);
+        console.log('저장된 travel_id:', travelId);
         
         setMessages([
           {
@@ -168,20 +174,46 @@ export default function AIChatScreen() {
   };
 
   // 여행 계획 저장 핸들러
-  const handleSavePlan = (messageId: string) => {
-    // TODO: 실제 API 호출로 저장 기능 구현
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, isSaved: true } : msg
-    ));
-    // 저장 완료 메시지 추가
-    const savedMessage: Message = {
-      id: Date.now().toString(),
-      text: '여행 계획이 저장되었습니다! 💾',
-      isUser: false,
-      timestamp: new Date(),
-      hasRepositoryLink: true,
-    };
-    setMessages(prev => [...prev, savedMessage]);
+  const handleSavePlan = async (messageId: string) => {
+    if (!currentTravelId) {
+      console.log('저장할 여행 계획 ID가 없습니다.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('=== 여행 계획 저장 시작 ===');
+      console.log('travel_id:', currentTravelId);
+      
+      const accessToken = tokens?.accessToken;
+      await saveTravelPlan(currentTravelId, accessToken);
+
+      // 저장 완료 표시
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, isSaved: true } : msg
+      ));
+
+      // 저장 완료 메시지 추가
+      const savedMessage: Message = {
+        id: Date.now().toString(),
+        text: '여행 계획이 저장되었습니다! 💾\n보관함에서 확인하실 수 있습니다.',
+        isUser: false,
+        timestamp: new Date(),
+        hasRepositoryLink: true,
+      };
+      setMessages(prev => [...prev, savedMessage]);
+    } catch (error: any) {
+      console.log('저장 실패:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: '저장에 실패했습니다. 다시 시도해주세요.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSend = async () => {

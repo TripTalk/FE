@@ -11,20 +11,31 @@ export interface TravelData {
   price?: number;
   priceUnit?: string;
   status: 'planned' | 'completed';
+  transportations?: Array<{
+    origin: string;
+    destination: string;
+    name: string;
+    price: number;
+  }>;
+  accommodations?: Array<{
+    name: string;
+    pricePerNight: number;
+  }>;
 }
 
 interface TravelCardProps {
   travel: TravelData;
   onPress?: () => void;
+  onToggleComplete?: () => void;
 }
 
-export function TravelCard({ travel, onPress }: TravelCardProps) {
+export function TravelCard({ travel, onPress, onToggleComplete }: TravelCardProps) {
   const formatDateRange = (start: string, end: string) => `${start} - ${end}`;
   const formatPrice = (price?: number, unit?: string) => price ? `${price.toLocaleString()}${unit || '원'}` : '';
 
-  // 샘플: 항공/호텔 정보 (실제 데이터 구조에 맞게 수정 필요)
-  const flight = { label: '제주항공', price: 89000, unit: '원', icon: '✈️' };
-  const hotel = { label: '제주 오션뷰 호텔', price: 120000, unit: '원/박', icon: '🏨' };
+  // 실제 API 데이터 사용
+  const outboundFlight = travel.transportations?.[0];
+  const accommodation = travel.accommodations?.[0];
 
   const isCompleted = travel.status === 'completed';
   return (
@@ -42,23 +53,27 @@ export function TravelCard({ travel, onPress }: TravelCardProps) {
           {formatDateRange(travel.startDate, travel.endDate)}
         </ThemedText>
         <View style={styles.infoBox}>
-          <View style={styles.infoRow}>
-            <Text style={styles.icon}>✈️</Text>
-            <ThemedText style={styles.infoLabel}>{flight.label}</ThemedText>
-            <ThemedText style={styles.infoValue}>{flight.price.toLocaleString()}원</ThemedText>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.icon}>🏨</Text>
-            <ThemedText style={styles.infoLabel}>{hotel.label}</ThemedText>
-            <ThemedText style={styles.infoValueHotel}>{hotel.price.toLocaleString()}원/박</ThemedText>
-          </View>
+          {outboundFlight && (
+            <View style={styles.infoRow}>
+              <Text style={styles.icon}>✈️</Text>
+              <ThemedText style={styles.infoLabel}>{outboundFlight.name}</ThemedText>
+              <ThemedText style={styles.infoValue}>{outboundFlight.price.toLocaleString()}원</ThemedText>
+            </View>
+          )}
+          {accommodation && (
+            <View style={styles.infoRow}>
+              <Text style={styles.icon}>🏨</Text>
+              <ThemedText style={styles.infoLabel}>{accommodation.name}</ThemedText>
+              <ThemedText style={styles.infoValueHotel}>{accommodation.pricePerNight.toLocaleString()}원/박</ThemedText>
+            </View>
+          )}
         </View>
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.detailButton} onPress={onPress}>
             <ThemedText style={styles.detailButtonText}>상세보기</ThemedText>
           </TouchableOpacity>
           {!isCompleted && (
-            <TouchableOpacity style={styles.completeButton}>
+            <TouchableOpacity style={styles.completeButton} onPress={onToggleComplete}>
               <ThemedText style={styles.completeButtonText}>여행 완료</ThemedText>
             </TouchableOpacity>
           )}

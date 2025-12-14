@@ -1,337 +1,326 @@
-import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { DaySchedule } from '@/components/repository/DaySchedule';
-import { PriceInfo } from '@/components/repository/PriceInfo';
 import { ShareModal } from '@/components/repository/ShareModal';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
+import { useAuth } from '@/contexts/AuthContext';
+import { getTripPlanDetail, SavedTripPlan } from '@/services/api';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-// 샘플 여행 데이터
-const travelData: Record<string, any> = {
-  '1': {
-    id: '1',
-    title: '제주도 3박 4일 힐링 여행',
-    location: '제주도',
-    startDate: '2024.03.15',
-    endDate: '2024.03.18',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    price: '50만-100만원',
-    description: '아름다운 제주도에서 힐링하는 완벽한 여행',
-    schedules: [
-      {
-        day: 1,
-        date: '3월 15일 (금)',
-        items: [
-          { time: '10:00', title: '도착 및 렌터카 픽업', location: '제주공항' },
-          { time: '12:00', title: '올레국수', location: '제주시' },
-          { time: '14:00', title: '성산일출봉', location: '성산읍' },
-          { time: '17:00', title: '숙소 체크인', location: '카마 제주리조트' },
-          { time: '19:00', title: '올레시장 식사', location: '올레시장' },
-        ]
-      }
-    ],
-    prices: [
-      { type: 'flight' as const, title: '제주항공', subtitle: '김포 → 제주', price: 89000 },
-      { type: 'accommodation' as const, title: '대명리조트', subtitle: '제주 → 김포', price: 125000 },
-      { type: 'accommodation' as const, title: '제주 오션뷰 리조트', subtitle: '서귀포시', price: 120000, unit: '원/박' },
-      { type: 'accommodation' as const, title: '제주 힐링 펜션', subtitle: '제주시', price: 85000, unit: '원/박' },
-    ]
-  },
-  '2': {
-    id: '2',
-    title: '부산 맛집 투어 여행',
-    location: '부산',
-    startDate: '2024.04.20',
-    endDate: '2024.04.22',
-    image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400',
-    price: '30만-60만원',
-    description: '부산의 대표 맛집들을 둘러보는 미식 여행',
-    schedules: [
-      {
-        day: 1,
-        date: '4월 20일 (토)',
-        items: [
-          { time: '09:00', title: '부산역 도착', location: '부산역' },
-          { time: '10:30', title: '자갈치시장', location: '남구' },
-          { time: '12:00', title: '밀면 맛집', location: '서면' },
-          { time: '15:00', title: '해운대 해수욕장', location: '해운대구' },
-          { time: '18:00', title: '광안리 회센터', location: '수영구' },
-        ]
-      }
-    ],
-    prices: [
-      { type: 'flight' as const, title: 'KTX', subtitle: '서울 → 부산', price: 59800 },
-      { type: 'accommodation' as const, title: '부산 시티호텔', subtitle: '서면역', price: 95000, unit: '원/박' },
-    ]
-  },
-  '3': {
-    id: '3',
-    title: '강릉 바다여행 1박 2일',
-    location: '강릉',
-    startDate: '2025.01.05',
-    endDate: '2025.01.06',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    price: '25만-30만원',
-    description: '동해안의 아름다운 바다와 함께하는 힐링 여행',
-    schedules: [
-      {
-        day: 1,
-        date: '1월 5일 (일)',
-        items: [
-          { time: '08:00', title: 'KTX 출발', location: '서울역' },
-          { time: '10:30', title: '강릉역 도착', location: '강릉역' },
-          { time: '12:00', title: '강릉 중앙시장 맛집', location: '강릉시' },
-          { time: '14:00', title: '경포대 해수욕장', location: '경포대' },
-          { time: '17:00', title: '숙소 체크인', location: '강릉 씨마크호텔' },
-        ]
-      }
-    ],
-    prices: [
-      { type: 'flight' as const, title: 'KTX', subtitle: '서울 → 강릉', price: 28900 },
-      { type: 'accommodation' as const, title: '강릉 씨마크호텔', subtitle: '경포대', price: 180000, unit: '원/박' },
-    ]
-  },
-  '4': {
-    id: '4',
-    title: '부산 맛집 투어 여행',
-    location: '부산',
-    startDate: '2024.10.20',
-    endDate: '2024.10.22',
-    image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400',
-    price: '30만-35만원',
-    description: '부산의 유명한 맛집들을 둘러보는 미식 여행 (완료)',
-    schedules: [
-      {
-        day: 1,
-        date: '10월 20일 (일)',
-        items: [
-          { time: '09:00', title: '부산역 도착', location: '부산역' },
-          { time: '10:30', title: '자갈치시장', location: '남구' },
-          { time: '12:00', title: '밀면 맛집', location: '서면' },
-          { time: '15:00', title: '해운대 해수욕장', location: '해운대구' },
-          { time: '18:00', title: '광안리 회센터', location: '수영구' },
-        ]
-      }
-    ],
-    prices: [
-      { type: 'flight' as const, title: 'KTX', subtitle: '서울 → 부산', price: 59800 },
-      { type: 'accommodation' as const, title: '부산 시티호텔', subtitle: '서면역', price: 95000, unit: '원/박' },
-    ]
-  },
-  '5': {
-    id: '5',
-    title: '경주 역사탐방 2박 3일',
-    location: '경주',
-    startDate: '2024.09.15',
-    endDate: '2024.09.17',
-    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
-    price: '35만-40만원',
-    description: '천년 고도 경주의 역사와 문화를 체험하는 여행 (완료)',
-    schedules: [
-      {
-        day: 1,
-        date: '9월 15일 (일)',
-        items: [
-          { time: '10:00', title: '불국사 관람', location: '불국사' },
-          { time: '12:30', title: '경주 전통한식', location: '황리단길' },
-          { time: '14:00', title: '석굴암', location: '석굴암' },
-          { time: '16:00', title: '첨성대', location: '첨성대' },
-          { time: '18:00', title: '숙소 체크인', location: '경주 힐튼호텔' },
-        ]
-      }
-    ],
-    prices: [
-      { type: 'accommodation' as const, title: '경주 힐튼호텔', subtitle: '경주시', price: 150000, unit: '원/박' },
-      { type: 'flight' as const, title: '입장료', subtitle: '불국사+석굴암', price: 8000 },
-    ]
-  },
-  '6': {
-    id: '6',
-    title: '전주 한옥마을 당일치기',
-    location: '전주',
-    startDate: '2024.08.12',
-    endDate: '2024.08.12',
-    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
-    price: '10만-20만원',
-    description: '전주 한옥마을의 전통 문화와 맛집 탐방 당일 여행 (완료)',
-    schedules: [
-      {
-        day: 1,
-        date: '8월 12일 (월)',
-        items: [
-          { time: '08:00', title: 'KTX 출발', location: '용산역' },
-          { time: '10:00', title: '전주역 도착', location: '전주역' },
-          { time: '11:00', title: '한옥마을 도보 관광', location: '전주 한옥마을' },
-          { time: '12:30', title: '전주 비빔밥', location: '한옥마을' },
-          { time: '15:00', title: '경기전', location: '경기전' },
-          { time: '17:00', title: '귀가', location: '전주역' },
-        ]
-      }
-    ],
-    prices: [
-      { type: 'flight' as const, title: 'KTX 왕복', subtitle: '용산 → 전주', price: 89600 },
-      { type: 'accommodation' as const, title: '식사비', subtitle: '비빔밥+간식', price: 45000 },
-    ]
-  }
-};
+
 
 export default function TravelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const travel = travelData[id || '1'];
-  const [shareModalVisible, setShareModalVisible] = React.useState(false);
+  const { tokens } = useAuth();
+  const [travel, setTravel] = useState<SavedTripPlan | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
 
-  const handleShare = () => {
-    setShareModalVisible(true);
-  };
+  const handleShare = () => setShareModalVisible(true);
+  const closeShareModal = () => setShareModalVisible(false);
 
-  const closeShareModal = () => {
-    setShareModalVisible(false);
-  };
+
+  useEffect(() => {
+    if (!id || !tokens?.accessToken) return;
+
+    const fetchTravelDetail = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const accessToken = tokens.accessToken;
+        const response = await getTripPlanDetail(parseInt(id), accessToken);
+        if (response.isSuccess && response.result) {
+          setTravel(response.result);
+        } else {
+          throw new Error(response.message || '여행 정보를 불러올 수 없습니다.');
+        }
+      } catch (error: any) {
+        setError(error.message || '알 수 없는 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTravelDetail();
+  }, [id, tokens?.accessToken]);
+
+
+  if (isLoading) {
+    return (
+      <SafeAreaView>
+        <ThemedView>
+          <ThemedText>로딩 중...</ThemedText>
+        </ThemedView>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView>
+        <ThemedView>
+          <ThemedText>오류: {error}</ThemedText>
+        </ThemedView>
+      </SafeAreaView>
+    );
+  }
+
 
   if (!travel) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.cardInfoBox}>
-          <ThemedText style={styles.cardTitle}>여행 정보를 찾을 수 없습니다.</ThemedText>
-        </View>
+      <SafeAreaView>
+        <ThemedView>
+          <ThemedText>여행 정보를 찾을 수 없습니다.</ThemedText>
+        </ThemedView>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.scrollView}>
-        {/* 여행 대표 이미지 */}
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: travel.image }} style={styles.image} />
-        </View>
-        <View style={styles.content}>
-          {/* 여행 정보 카드 */}
-          <View style={styles.cardInfoBox}>
-            <ThemedText style={styles.cardTitle}>{travel.title}</ThemedText>
-            <View style={styles.infoGrid}>
-              <View style={styles.infoCol}>
-                <View style={styles.infoRow2}>
-                  <ThemedText style={styles.cardLabel}>📍 목적지</ThemedText>
-                </View>
-                <ThemedText style={styles.cardValue}>{travel.location}</ThemedText>
-                <View style={[styles.infoRow2, { marginTop: 16 }]}> 
-                  <ThemedText style={styles.cardLabel}>👥 인원</ThemedText>
-                </View>
-                <ThemedText style={styles.cardValue}>연인</ThemedText>
-              </View>
-              <View style={styles.infoCol}>
-                <View style={styles.infoRow2}>
-                  <ThemedText style={styles.cardLabel}>📅 기간</ThemedText>
-                </View>
-                <ThemedText style={styles.cardValue}>{travel.startDate} - {travel.endDate}</ThemedText>
-                <View style={[styles.infoRow2, { marginTop: 16 }]}> 
-                  <ThemedText style={styles.cardLabel}>💰 예산</ThemedText>
-                </View>
-                <ThemedText style={styles.cardValue}>{travel.price}</ThemedText>
-              </View>
-            </View>
-            {/* 여행 스타일 태그 */}
-            <View style={{ marginTop: 12 }}>
-              <View style={styles.infoRow2}>
-                <ThemedText style={styles.cardLabel}>🎨 여행 스타일</ThemedText>
-              </View>
-              <View style={styles.styleTagRow}>
-                <ThemedText style={styles.styleTag}>#힐링</ThemedText>
-                <ThemedText style={styles.styleTag}>#자연과 함께</ThemedText>
-                <ThemedText style={styles.styleTag}>#카페투어</ThemedText>
-              </View>
-            </View>
-          </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7FAFA' }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }}>
+        {/* 여행 요약 카드 */}
+        <ThemedView style={[styles.cardInfoBox, { padding: 0, overflow: 'hidden' }]}> 
+          {/* 대표 이미지 */}
+          {travel.imageUrl && (
+            <Image
+              source={{ uri: travel.imageUrl }}
+              style={{ width: '100%', height: 180, resizeMode: 'cover', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}
+            />
+          )}
+          <ThemedView style={{ padding: 20 }}>
+            <ThemedText style={[styles.cardTitle, { fontSize: 24, marginBottom: 12 }]}>{travel.title}</ThemedText>
+            <ThemedView style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 8 }}>
+              <ThemedView style={{ flex: 1 }}>
+                <ThemedText style={styles.summaryLabel}>📍 목적지</ThemedText>
+                <ThemedText style={styles.summaryValue}>{travel.destination}</ThemedText>
+              </ThemedView>
+              <ThemedView style={{ flex: 1 }}>
+                <ThemedText style={styles.summaryLabel}>📅 기간</ThemedText>
+                <ThemedText style={styles.summaryValue}>{travel.startDate} - {travel.endDate}</ThemedText>
+              </ThemedView>
+            </ThemedView>
+            <ThemedView style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 8 }}>
+              <ThemedView style={{ flex: 1 }}>
+                <ThemedText style={styles.summaryLabel}>👥 인원</ThemedText>
+                <ThemedText style={styles.summaryValue}>{travel.companions}</ThemedText>
+              </ThemedView>
+              <ThemedView style={{ flex: 1 }}>
+                <ThemedText style={styles.summaryLabel}>💰 예산</ThemedText>
+                <ThemedText style={styles.summaryValue}>{travel.budget ? `${Number(travel.budget).toLocaleString()}원` : '-'}</ThemedText>
+              </ThemedView>
+            </ThemedView>
+            {/* 여행 스타일 태그 - 텍스트/아이콘 제거, 해시태그만 */}
+            {travel.travelStyles && travel.travelStyles.length > 0 && (
+              <ThemedView style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                {travel.travelStyles.map((style: string, idx: number) => (
+                  <ThemedView key={idx} style={styles.hashtagBox}>
+                    <ThemedText style={styles.hashtagText}>{getKoreanStyle(style)}</ThemedText>
+                  </ThemedView>
+                ))}
+              </ThemedView>
+            )}
+          </ThemedView>
+        </ThemedView>
 
-          {/* 여행 일정 */}
-          <ThemedView style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>📋 여행 일정</ThemedText>
-            {travel.schedules?.map((schedule: any, index: number) => (
+
+        {/* 일정 표시 - 가장 위로 이동 */}
+        <View style={styles.scheduleCardWrap}>
+          <View style={styles.scheduleCardHeaderRow}>
+            <ThemedText style={styles.scheduleCardTitle}>여행 일정</ThemedText>
+          </View>
+          <>
+            <View style={styles.dayTabRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ flexDirection: 'row', alignItems: 'center' }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {travel.dailySchedules && travel.dailySchedules.length > 0 ? (
+                  travel.dailySchedules.map((day, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={[
+                        styles.dayTab,
+                        selectedDayIdx === idx && styles.dayTabActive
+                      ]}
+                      onPress={() => setSelectedDayIdx(idx)}
+                    >
+                      <ThemedText style={selectedDayIdx === idx ? styles.dayTabTextActive : styles.dayTabText}>
+                        {`Day${day.day || idx + 1}`}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))
+                ) : null}
+              </ScrollView>
+            </View>
+            {travel.dailySchedules && travel.dailySchedules.length > 0 && travel.dailySchedules[selectedDayIdx] && travel.dailySchedules[selectedDayIdx].schedules ? (
               <DaySchedule
-                key={index}
-                day={schedule.day}
-                date={schedule.date}
-                schedules={schedule.items}
-                isActive={index === 0}
+                day={travel.dailySchedules[selectedDayIdx].day || selectedDayIdx + 1}
+                date={travel.dailySchedules[selectedDayIdx].date}
+                schedules={travel.dailySchedules[selectedDayIdx].schedules}
               />
+            ) : (
+              <ThemedText style={{ color: '#888', fontSize: 15, marginTop: 16 }}>등록된 일정이 없습니다.</ThemedText>
+            )}
+          </>
+
+        </View>
+
+        {/* 항공권 카드 - 아래로 이동 */}
+        {travel.transportations && travel.transportations.length > 0 && (
+          <ThemedView style={styles.cardInfoBox}>
+            <ThemedText style={styles.sectionTitle}>항공</ThemedText>
+            {travel.transportations.map((transport: any, idx: number) => (
+              <ThemedView key={idx} style={styles.flightCard}>
+                <ThemedView style={styles.flightIconBox}>
+                  <ThemedText style={styles.flightIcon}>✈️</ThemedText>
+                </ThemedView>
+                <ThemedView style={{ flex: 1 }}>
+                  <ThemedText style={styles.flightTitle}>{transport.name}</ThemedText>
+                  <ThemedText style={styles.flightSub}>{transport.origin} → {transport.destination}</ThemedText>
+                </ThemedView>
+                <ThemedText style={styles.flightPrice}>{transport.price.toLocaleString()}원</ThemedText>
+              </ThemedView>
             ))}
           </ThemedView>
+        )}
 
-          {/* 가격 정보 */}
-          {travel.prices && (
-            <ThemedView style={styles.section}>
-              <PriceInfo priceItems={travel.prices} />
-            </ThemedView>
-          )}
+        {/* 숙박 카드 - 아래로 이동 */}
+        {travel.accommodations && travel.accommodations.length > 0 && (
+          <ThemedView style={styles.cardInfoBox}>
+            <ThemedText style={styles.sectionTitle}>숙박</ThemedText>
+            {travel.accommodations.map((accommodation: any, idx: number) => (
+              <ThemedView key={idx} style={styles.accommodationCard}>
+                <ThemedView style={styles.accommodationIconBox}>
+                  <ThemedText style={styles.accommodationIcon}>🏨</ThemedText>
+                </ThemedView>
+                <ThemedView style={{ flex: 1 }}>
+                  <ThemedText style={styles.accommodationTitle}>{accommodation.name}</ThemedText>
+                  <ThemedText style={styles.accommodationSub}>{accommodation.address}</ThemedText>
+                </ThemedView>
+                <ThemedText style={styles.accommodationPriceGreen}>{accommodation.pricePerNight.toLocaleString()}원/박</ThemedText>
+              </ThemedView>
+            ))}
+          </ThemedView>
+        )}
 
-          {/* 공유하기 버튼 */}
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-            <ThemedText style={styles.shareButtonText}>🔗 공유하기</ThemedText>
-          </TouchableOpacity>
-        </View>
+        <ShareModal
+          visible={shareModalVisible}
+          onClose={closeShareModal}
+          travelData={{
+            title: travel?.title || '',
+            location: travel?.destination || '',
+            image: travel?.imageUrl || '',
+          }}
+        />
+
+        {/* 공유하기 버튼 - 하단 고정 */}
+        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <ThemedText style={styles.shareButtonText}>공유하기</ThemedText>
+        </TouchableOpacity>
       </ScrollView>
-      {/* 공유 모달 */}
-      <ShareModal
-        visible={shareModalVisible}
-        onClose={closeShareModal}
-        travelData={{
-          title: travel?.title || '',
-          location: travel?.location || '',
-          image: travel?.image || '',
-        }}
-      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  infoGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 8,
+  // --- 일정 카드/탭 관련 ---
+  // 중복 제거: 일정 관련 스타일은 아래 한 번만 남깁니다.
+  // --- 기존 스타일 ---
+  // --- 일정 카드/탭 관련 ---
+  // 중복 제거: 일정 관련 스타일은 아래 한 번만 남깁니다.
+  // --- 기존 스타일 ---
+  // --- 일정 카드/탭 관련 ---
+  scheduleCardWrap: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    marginHorizontal: 16,
+    marginTop: 24,
+    padding: 0,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+    marginBottom: 32,
   },
-  infoCol: {
-    flex: 1,
-    gap: 8,
-  },
-  infoRow2: {
+  scheduleCardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
-    flexWrap: 'wrap',
+    paddingTop: 24,
+    paddingLeft: 24,
+    paddingBottom: 0,
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  scheduleCardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
   },
-  safeArea: {
-    backgroundColor: '#FFFFFF',
+  dayTabRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+    marginBottom: 8,
+    paddingLeft: 24,
+    gap: 8,
   },
-  scrollView: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
+  dayTab: {
+    backgroundColor: '#F2F4F7',
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    marginRight: 8,
   },
-  imageContainer: {
-    height: 250,
+  dayTabActive: {
+    backgroundColor: '#20C997',
   },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+  dayTabText: {
+    color: '#8A94A6',
+    fontSize: 16,
+    fontWeight: '500',
   },
-  content: {
+  dayTabTextActive: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  hashtagBox: {
+    backgroundColor: 'rgba(45, 180, 180, 0.10)', // 연한 민트
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 4,
+    marginBottom: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hashtagText: {
+    color: '#20B2AA', // 민트색
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  flightCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFF',
+    borderRadius: 16,
     padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E6F0FA',
   },
   cardInfoBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
-    marginBottom: 16,
+    margin: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -341,68 +330,23 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#1A2A3A',
-    marginBottom: 18,
-  },
-  cardInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    flexWrap: 'wrap',
-  },
-  cardLabel: {
-    fontSize: 15,
-    color: '#3A4A5A',
-    marginRight: 8,
-    fontWeight: '500',
-    minWidth: 60,
-  },
-  cardValue: {
-    fontSize: 15,
-    color: '#222',
-    marginRight: 18,
-    fontWeight: '400',
-    minWidth: 80,
-  },
-  styleTagRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginLeft: 8,
-  },
-  styleTag: {
-    backgroundColor: '#EAF6F3',
-    color: '#3AAFA9',
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 6,
-    fontWeight: '500',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 18,
     marginBottom: 8,
   },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+  cardValue: {
+    fontSize: 16,
+    color: '#333',
   },
-  section: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+  summaryLabel: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 2,
+    fontWeight: '500',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 16,
+  summaryValue: {
+    fontSize: 16,
+    color: '#222',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   shareButton: {
     backgroundColor: '#007AFF',
@@ -413,10 +357,106 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     flexDirection: 'row',
     justifyContent: 'center',
+    marginLeft: 16,
+    marginRight: 16,
   },
   shareButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
   },
+  flightIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E6F0FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  flightIcon: {
+    fontSize: 20,
+    color: '#5B9EFF',
+  },
+  flightTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  flightSub: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 2,
+  },
+  flightPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2574FF',
+    marginLeft: 12,
+  },
+  accommodationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FFF8',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#D3F9D8',
+  },
+  accommodationIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#D3F9D8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  accommodationIcon: {
+    fontSize: 20,
+    color: '#20C997',
+  },
+  accommodationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  accommodationSub: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 2,
+  },
+  accommodationPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#20C997',
+    marginLeft: 12,
+  },
+  accommodationPriceGreen: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2DB400', // 네이버 초록
+    marginLeft: 12,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 8,
+  },
 });
+
+// 해시태그 한글 변환 함수 (Figma 스타일)
+function getKoreanStyle(style: string) {
+  switch (style) {
+    case 'HEALING': return '#힐링';
+    case 'LOCAL_VIBE': return '#로컬감성';
+    case 'HOTPLACE': return '#핫플레이스';
+    case 'MUST_VISIT': return '#필수코스';
+    case 'NATURE': return '#자연과함께';
+    case 'CAFE_TOUR': return '#카페투어';
+    case 'FOOD_TOUR': return '#맛집탐방';
+    default: return `#${style}`;
+  }
+}
