@@ -1,8 +1,10 @@
 import { AccommodationCard } from '@/components/home/AccommodationCard';
 import { ThemedText } from '@/components/shared/themed-text';
+import { useAuth } from '@/contexts/AuthContext';
+import { Accommodation, Flight, getAccommodations, getFlights } from '@/services/api';
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
     Easing,
     FadeIn,
@@ -16,29 +18,115 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// 실제 API 연동
-async function fetchFlights() {
-  const res = await fetch('/api/flights');
-  if (!res.ok) return [];
-  return await res.json();
+// 실제 API 연동 (services/api 사용)
+// 샘플 폴백 데이터 (API 호출에 실패할 경우 시뮬레이터에서 보기 위해 사용)
+const SAMPLE_FLIGHTS = [
+  { id: 1, departure: '김포', destination: '제주', price: 45000, imgUrl: 'https://images.unsplash.com/photo-1502920917128-1aa500764b39?q=80&w=1200&auto=format&fit=crop' },
+  { id: 2, departure: '김포', destination: '부산', price: 35000, imgUrl: 'https://images.unsplash.com/photo-1506976785307-8732e854adf5?q=80&w=1200&auto=format&fit=crop' },
+];
+const SAMPLE_ACCOMMODATIONS = [
+  { id: 1, name: '나인트리 프리미어 호텔 명동2', location: '서울 중구', price: 130000, imgUrl: 'https://images.unsplash.com/photo-1501117716987-c8e6f2f7b3c7?q=80&w=1200&auto=format&fit=crop' },
+];
+
+async function fetchFlights(accessToken?: string | null) {
+  try {
+    const data = await getFlights(undefined, accessToken || undefined);
+    return data?.result?.flightList || SAMPLE_FLIGHTS;
+  } catch (err) {
+    console.warn('getFlights error, falling back to SAMPLE_FLIGHTS', err);
+    return SAMPLE_FLIGHTS;
+  }
 }
-async function fetchAccommodations() {
-  const res = await fetch('/api/accommodations');
-  if (!res.ok) return [];
-  return await res.json();
+
+async function fetchAccommodations(accessToken?: string | null) {
+  try {
+    const data = await getAccommodations(undefined, accessToken || undefined);
+    return data?.result?.accommodationList || SAMPLE_ACCOMMODATIONS;
+  } catch (err) {
+    console.warn('getAccommodations error, falling back to SAMPLE_ACCOMMODATIONS', err);
+    return SAMPLE_ACCOMMODATIONS;
+  }
 }
 
 export default function AccommodationScreen() {
   const [activeTab, setActiveTab] = useState<'항공' | '숙박'>('항공');
-  const [flights, setFlights] = useState<any[]>([]);
-  const [accommodations, setAccommodations] = useState<any[]>([]);
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [flightsCursor, setFlightsCursor] = useState<number | null>(null);
+  const [flightsHasNext, setFlightsHasNext] = useState(false);
+  const [accCursor, setAccCursor] = useState<number | null>(null);
+  const [accHasNext, setAccHasNext] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // aliases for older references (avoid ReferenceError if partially rolled back builds reference these)
+  const loadingMoreFlights = loadingMore;
+  const loadingMoreAcc = loadingMore;
+
+  const { tokens } = useAuth();
 
   useEffect(() => {
-    setLoading(true);
-    fetchFlights().then(setFlights).finally(() => setLoading(false));
-    fetchAccommodations().then(setAccommodations);
-  }, []);
+    const init = async () => {
+      setLoading(true);
+      try {
+        const fRes = await getFlights(undefined, tokens?.accessToken);
+        const aRes = await getAccommodations(undefined, tokens?.accessToken);
+
+        const fList = fRes?.result?.flightList || [];
+        const aList = aRes?.result?.accommodationList || [];
+
+        setFlights(fList);
+        setFlightsCursor(fRes?.result?.nextCursorId ?? null);
+        setFlightsHasNext(!!fRes?.result?.hasNext);
+
+        setAccommodations(aList);
+        setAccCursor(aRes?.result?.nextCursorId ?? null);
+        setAccHasNext(!!aRes?.result?.hasNext);
+      } catch (err) {
+        console.warn('initial fetch failed, falling back to sample fetch', err);
+        const f = await fetchFlights(tokens?.accessToken);
+        const a = await fetchAccommodations(tokens?.accessToken);
+        setFlights(f);
+        setAccommodations(a);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [tokens]);
+
+  const loadMoreFlights = async () => {
+    if (!flightsHasNext || loadingMore) return;
+    console.log('loadMoreFlights triggered, cursor:', flightsCursor);
+    setLoadingMore(true);
+    try {
+      const res = await getFlights(flightsCursor ?? undefined, tokens?.accessToken);
+      const next = res?.result?.flightList || [];
+      setFlights(prev => [...prev, ...next]);
+      setFlightsCursor(res?.result?.nextCursorId ?? null);
+      setFlightsHasNext(!!res?.result?.hasNext);
+    } catch (err) {
+      console.warn('loadMoreFlights error', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreAccommodations = async () => {
+    if (!accHasNext || loadingMore) return;
+    console.log('loadMoreAccommodations triggered, cursor:', accCursor);
+    setLoadingMore(true);
+    try {
+      const res = await getAccommodations(accCursor ?? undefined, tokens?.accessToken);
+      const next = res?.result?.accommodationList || [];
+      setAccommodations(prev => [...prev, ...next]);
+      setAccCursor(res?.result?.nextCursorId ?? null);
+      setAccHasNext(!!res?.result?.hasNext);
+    } catch (err) {
+      console.warn('loadMoreAccommodations error', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // 슬라이딩 인디케이터 애니메이션
   const indicatorPosition = useSharedValue(0);
@@ -62,48 +150,39 @@ export default function AccommodationScreen() {
     router.back();
   };
 
-  const renderFlightGrid = (items: typeof flights) => {
-    const rows = [];
-    for (let i = 0; i < items.length; i += 2) {
-      const row = items.slice(i, i + 2);
-      rows.push(
-        <View key={i} style={styles.accommodationRow}>
-          {row.map((item) => (
-            <AccommodationCard
-              key={item.id}
-              title={`${item.departure} → ${item.destination}`}
-              tag="항공"
-              price={`${item.price.toLocaleString()}원`}
-              imageUrl={item.imgUrl}
-            />
-          ))}
-          {row.length === 1 && <View style={styles.emptyCard} />}
-        </View>
-      );
-    }
-    return rows;
+  const renderFlightItem = ({ item }: { item: Flight }) => {
+    const priceVal: any = (item as any).price ?? (item as any).pricePerNight ?? null;
+    const priceStr = typeof priceVal === 'number' ? `${priceVal.toLocaleString()}원` : (priceVal ? `${priceVal}` : '요금 없음');
+    const rawImage = (item as any).imgUrl || (item as any).imageUrl || '';
+    const imageUrl = rawImage && rawImage.length > 0 ? rawImage : undefined;
+    const origin = (item as any).originName ?? (item as any).departure ?? '';
+    const destination = (item as any).destinationName ?? (item as any).destination ?? '';
+    const airline = (item as any).airlineName ?? (item as any).airline ?? '항공';
+    return (
+      <AccommodationCard
+        title={`${origin} → ${destination}`}
+        tag={airline}
+        price={priceStr}
+        imageUrl={imageUrl}
+      />
+    );
   };
 
-  const renderAccommodationGrid = (items: typeof accommodations) => {
-    const rows = [];
-    for (let i = 0; i < items.length; i += 2) {
-      const row = items.slice(i, i + 2);
-      rows.push(
-        <View key={i} style={styles.accommodationRow}>
-          {row.map((item) => (
-            <AccommodationCard
-              key={item.id}
-              title={item.name}
-              tag="숙박"
-              price={`${item.price.toLocaleString()}원/박`}
-              imageUrl={item.imgUrl}
-            />
-          ))}
-          {row.length === 1 && <View style={styles.emptyCard} />}
-        </View>
-      );
-    }
-    return rows;
+  const renderAccommodationItem = ({ item }: { item: Accommodation }) => {
+    const priceVal: any = (item as any).price ?? (item as any).pricePerNight ?? null;
+    const priceStr = typeof priceVal === 'number' ? `${priceVal.toLocaleString()}원/박` : (priceVal ? `${priceVal}` : '요금 없음');
+    const rawImage = (item as any).imgUrl || (item as any).imageUrl || '';
+    const imageUrl = rawImage && rawImage.length > 0 ? rawImage : undefined;
+    const hotelName = (item as any).hotelName ?? (item as any).name ?? '';
+    const cityName = (item as any).cityName ?? (item as any).location ?? '숙박';
+    return (
+      <AccommodationCard
+        title={hotelName}
+        tag={cityName}
+        price={priceStr}
+        imageUrl={imageUrl}
+      />
+    );
   };
 
   return (
@@ -141,10 +220,7 @@ export default function AccommodationScreen() {
           </View>
         </View>
 
-        <ScrollView 
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.scrollView}>
           {/* 선택된 탭의 내용 */}
           <View style={styles.contentContainer}>
             {(activeTab === '항공' ? flights.length === 0 : accommodations.length === 0) ? (
@@ -161,13 +237,35 @@ export default function AccommodationScreen() {
                 layout={Layout.duration(200)}
                 style={styles.accommodationGrid}
               >
-                {activeTab === '항공' ? renderFlightGrid(flights) : renderAccommodationGrid(accommodations)}
+                {activeTab === '항공' ? (
+                  <FlatList
+                    data={flights}
+                    renderItem={renderFlightItem}
+                    keyExtractor={(item) => `${item.id}`}
+                    numColumns={2}
+                    columnWrapperStyle={styles.accommodationRow}
+                    onEndReached={loadMoreFlights}
+                    onEndReachedThreshold={0.6}
+                    ListFooterComponent={flightsHasNext && loadingMore ? <ActivityIndicator style={{ margin: 12 }} /> : null}
+                  />
+                ) : (
+                  <FlatList
+                    data={accommodations}
+                    renderItem={renderAccommodationItem}
+                    keyExtractor={(item) => `${item.id}`}
+                    numColumns={2}
+                    columnWrapperStyle={styles.accommodationRow}
+                    onEndReached={loadMoreAccommodations}
+                    onEndReachedThreshold={0.6}
+                    ListFooterComponent={accHasNext && loadingMore ? <ActivityIndicator style={{ margin: 12 }} /> : null}
+                  />
+                )}
               </Animated.View>
             )}
           </View>
 
           {/* 추천 특가 섹션 제거 - 백엔드 연동 완료 */}
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </>
   );

@@ -27,7 +27,7 @@ type Badge = {
 
 const badges: Badge[] = [
   { id: '1', name: '첫 여행', description: '첫 번째 여행을 완료했습니다', acquired: true, iconName: 'star', iconColor: '#FFD700' },
-  { id: '2', name: '사진 마니아', description: '여행 사진을 100장 업로드했습니다', acquired: true, iconName: 'camera-alt', iconColor: '#4A90E2' },
+  { id: '2', name: '계획 수집가', description: '여행 계획을 10번 이상 세웠습니다.', acquired: true, iconName: 'event-note', iconColor: '#4A90E2' },
   { id: '3', name: '탐험가', description: '10개 이상의 여행지를 방문했습니다', acquired: true, iconName: 'explore', iconColor: '#50E3C2' },
   { id: '4', name: '미획득', description: '아직 획득하지 못했습니다', acquired: false, iconName: 'lock-outline', iconColor: '#BDBDBD' },
   { id: '5', name: '미획득', description: '아직 획득하지 못했습니다', acquired: false, iconName: 'lock-outline', iconColor: '#BDBDBD' },

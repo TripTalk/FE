@@ -637,7 +637,7 @@ export interface FlightListResponse {
 
 /**
  * 항공권 목록 조회 API
- * GET /api/flight
+ * GET /api/flights
  */
 export const getFlights = async (
   cursorId?: number | null,
@@ -649,7 +649,7 @@ export const getFlights = async (
   }
   
   const queryString = params.toString();
-  const url = `${AUTH_API_BASE_URL}/api/flight${queryString ? `?${queryString}` : ''}`;
+  const url = `${AUTH_API_BASE_URL}/api/flights${queryString ? `?${queryString}` : ''}`;
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -720,7 +720,7 @@ export const getAccommodations = async (
   }
   
   const queryString = params.toString();
-  const url = `${AUTH_API_BASE_URL}/api/accommodation${queryString ? `?${queryString}` : ''}`;
+  const url = `${AUTH_API_BASE_URL}/api/accommodations${queryString ? `?${queryString}` : ''}`;
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

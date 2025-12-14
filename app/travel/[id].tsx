@@ -2,10 +2,12 @@ import { DaySchedule } from '@/components/repository/DaySchedule';
 import { ShareModal } from '@/components/repository/ShareModal';
 import { ThemedText } from '@/components/shared/themed-text';
 import { ThemedView } from '@/components/shared/themed-view';
+import { IconSymbol } from '@/components/shared/ui/icon-symbol';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTripPlanDetail, SavedTripPlan } from '@/services/api';
+import { useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 
@@ -21,6 +23,12 @@ export default function TravelDetailScreen() {
 
   const handleShare = () => setShareModalVisible(true);
   const closeShareModal = () => setShareModalVisible(false);
+
+  const navigation: any = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
 
   useEffect(() => {
@@ -81,6 +89,12 @@ export default function TravelDetailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F7FAFA' }}>
+      {/* custom header: only back button */}
+      <View style={styles.customHeader} pointerEvents="box-none">
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <IconSymbol name="chevron-left" size={28} color="#007AFF" />
+        </TouchableOpacity>
+      </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }}>
         {/* 여행 요약 카드 */}
         <ThemedView style={[styles.cardInfoBox, { padding: 0, overflow: 'hidden' }]}> 
@@ -444,6 +458,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#222',
     marginBottom: 8,
+  },
+  customHeader: {
+    position: 'absolute',
+    top: 10,
+    left: 12,
+    right: 12,
+    height: 44,
+    zIndex: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

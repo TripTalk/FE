@@ -33,7 +33,7 @@ const StatItem = ({ value, label, color, onPress }: StatItemProps) => (
 type BadgeItemProps = { label: string };
 const badgeIcons: Record<string, { icon: keyof typeof MaterialIcons.glyphMap; color: string }> = {
   '첫 여행': { icon: 'star', color: '#FFD700' },
-  '사진 마니아': { icon: 'camera-alt', color: '#4A90E2' },
+  '계획 수집가': { icon: 'event-note', color: '#4A90E2' },
   '탐험가': { icon: 'explore', color: '#50E3C2' },
   '미획득': { icon: 'lock-outline', color: '#BDBDBD' },
 };
@@ -224,7 +224,7 @@ export default function MyPageScreen() {
           </View>
           <View style={styles.badgeContainer}>
             <BadgeItem label="첫 여행" />
-            <BadgeItem label="사진 마니아" />
+            <BadgeItem label="계획 수집가" />
             <BadgeItem label="탐험가" />
             <BadgeItem label="미획득" />
           </View>
